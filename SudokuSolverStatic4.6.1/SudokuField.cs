@@ -77,22 +77,22 @@ namespace SudokuSolverStatic
 
         internal bool SetNumber(int number, Certainty certainty = defaultCertaintySetNumber, bool test = true)
         {
-            if (CertaintyIsOfSingleInstance(certainty))
-                foreach (Option option in Options)
+
+            foreach (Option option in Options)
+            {
+                if (option.Number == number)
                 {
-                    if (option.Number == number)
-                    {
-                        option.Certainty = certainty;
-                    }
-                    else if (certainty == Certainty.Set || certainty == Certainty.FiguredOut)
-                    {
-                        option.Certainty = Certainty.CanNotBe;
-                    }
-                    else if (certainty == Certainty.FiguredOutOnGuess)
-                    {
-                        option.Certainty = Certainty.CanNotBeOnGuess;
-                    }
+                    option.Certainty = certainty;
                 }
+                else if (certainty == Certainty.Set || certainty == Certainty.FiguredOut)
+                {
+                    option.Certainty = Certainty.CanNotBe;
+                }
+                else if (certainty == Certainty.FiguredOutOnGuess)
+                {
+                    option.Certainty = Certainty.CanNotBeOnGuess;
+                }
+            }
             if (test == true)
             {
                 return TryFigureOut();
@@ -114,7 +114,7 @@ namespace SudokuSolverStatic
             }
             foreach (int number in numbers)
             {
-                SetNumber(number, certainty);
+                SetNumber(number, certainty, false);
             }
             return TryFigureOut();
         }
@@ -181,6 +181,7 @@ namespace SudokuSolverStatic
                 return false;
             }
         }
+        
         private class Option
         {
             public int Number { get; set; }
