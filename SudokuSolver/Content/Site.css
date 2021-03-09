@@ -1,0 +1,152 @@
+﻿/* Set padding to keep content from hitting the edges */
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+h2 {
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    font-size: 36px;
+}
+
+button {
+    width: 150px;
+    height: 75px;
+    margin-bottom: 15px;
+    background-color: #01A7BD;
+    border-radius: 30px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    outline: none;
+}
+
+button:hover {
+    color: gold;
+}
+
+button:active {
+    border-style: none !important;
+}
+
+select {
+    width: 150px;
+    text-align-last: center;
+    padding-right: 29px;
+    direction: rtl;
+}
+
+footer {
+    position: absolute;
+    bottom: 30px;
+    left: 39%;
+    font-size: 24px;
+}
+
+/* Override the default bootstrap behavior where horizontal description lists 
+   will truncate terms that are too long to fit in the left column 
+*/
+.dl-horizontal dt {
+    white-space: normal;
+}
+
+/* Set width on the form input elements since they're 100% wide by default */
+input,
+select,
+textarea {
+    max-width: 280px;
+}
+
+#error {
+    color: red;
+}
+
+/* Set padding to keep content from hitting the edges */
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/* Override the default bootstrap behavior where horizontal description lists 
+   will truncate terms that are too long to fit in the left column 
+*/
+.dl-horizontal dt {
+    white-space: normal;
+}
+
+/* Set width on the form input elements since they're 100% wide by default */
+input,
+select,
+textarea {
+    max-width: 280px;
+}
+
+form {
+    margin-top: 30px;
+}
+
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type='number'] {
+    -moz-appearance: textfield;
+}
+
+.cell {
+    height: 75px;
+    width: 75px;
+    text-align: center;
+    font-size: 50px;
+}
+
+.pageHeader {
+    width: 100%;
+    height: 100px;
+    background-color: #12A8C0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.sudokuSidebar {
+    width: 25%;
+    float: left;
+    height: 693px;
+    background-color: lightgray;
+}
+
+.sudokuMainContainer {
+    width: 75%;
+    float: left;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.buttonContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 30px;
+}
+
+/*#sudokuTable > tr > td:nth-child(3) {
+    border-right: 3px black solid;
+}*/
+
+#thickBorder tbody > tr > td:nth-child(3), 
+#thickBorder tbody > tr > td:nth-child(6) {
+    border-right: 5px black solid;
+}
+#thickBorder tbody > tr:nth-child(3),
+#thickBorder tbody > tr:nth-child(6)  {
+    border-bottom: 5px black solid;
+}
+
+
