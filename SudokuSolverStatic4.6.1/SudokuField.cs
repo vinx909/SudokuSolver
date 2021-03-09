@@ -82,13 +82,20 @@ namespace SudokuSolverStatic
             {
                 if (option.Number == number)
                 {
-                    option.Certainty = certainty;
+                    if(certainty == Certainty.CanBe)
+                    {
+                        if (option.Certainty == Certainty.CanNotBeOnGuess) ;
+                    }
+                    else
+                    {                        
+                        option.Certainty = certainty;
+                    }
                 }
                 else if (certainty == Certainty.Set || certainty == Certainty.FiguredOut)
                 {
                     option.Certainty = Certainty.CanNotBe;
                 }
-                else if (certainty == Certainty.FiguredOutOnGuess)
+                else if (certainty == Certainty.FiguredOutOnGuess && option.Certainty == Certainty.CanBe)
                 {
                     option.Certainty = Certainty.CanNotBeOnGuess;
                 }
@@ -123,7 +130,7 @@ namespace SudokuSolverStatic
         {
             foreach (Option option in Options)
             {
-                if (option.Certainty == Certainty.CanNotBeOnGuess || option.Certainty == Certainty.FiguredOutOnGuess)
+                if (option.Certainty == Certainty.Guess || option.Certainty == Certainty.CanNotBeOnGuess || option.Certainty == Certainty.FiguredOutOnGuess)
                 {
                     option.Certainty = Certainty.CanBe;
                 }
@@ -172,7 +179,7 @@ namespace SudokuSolverStatic
         }
         private bool CertaintyIsOfSingleInstance(Certainty certainty)
         {
-            if (certainty == Certainty.Set || certainty == Certainty.FiguredOut || certainty == Certainty.FiguredOutOnGuess)
+            if (certainty == Certainty.Set || certainty == Certainty.FiguredOut || certainty == Certainty.FiguredOutOnGuess || certainty == Certainty.Guess)
             {
                 return true;
             }
