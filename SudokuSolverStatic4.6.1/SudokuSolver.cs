@@ -15,21 +15,34 @@ namespace SudokuSolverStatic
 
         private const string exceptionWrongFieldLength = "the sudoku field must be 9 by 9";
 
-        SudokuField[,] sudoku;
-        readonly List<int> numbersToExclude;
-        readonly List<SudokuField> fieldsToActOn;
-        int x;
-        int y;
+        private SudokuField[,] sudoku;
+        private readonly List<int> numbersToExclude;
+        private readonly List<SudokuField> fieldsToActOn;
 
-        public static int[][] Solve(int[][] field)
+        public static int[,] Solve(int[,] field)
         {
-            if (field.Length != 9 || field[0].Length != 9)
+            if (field.GetLength(0) != maxNumber || field.GetLength(1) != maxNumber)
             {
                 throw new Exception(exceptionWrongFieldLength);
             }
             SudokuSolver solver = new SudokuSolver(field);
-            bool finished = false;
+            Solve(solver);
+            return solver.FieldFieldToInt();
+        }
+        public static int[][] Solve(int[][] field)
+        {
+            if (field.Length != maxNumber || field[0].Length != maxNumber)
+            {
+                throw new Exception(exceptionWrongFieldLength);
+            }
+            SudokuSolver solver = new SudokuSolver(field);
+            Solve(solver);
+            return solver.FieldFieldToIntJagged();
+        }
 
+        public static void Solve(SudokuSolver solver)
+        {
+            bool finished = false;
 
             int solveState = 1;
             bool addition = false;
@@ -44,7 +57,7 @@ namespace SudokuSolverStatic
                             finished = solver.CheckIfFinished();
                             if (finished == true)
                             {
-                                return solver.FieldFieldToInt();
+                                return;
                             }
                             else
                             {
@@ -74,16 +87,21 @@ namespace SudokuSolverStatic
                 }
             }
            
-            return solver.FieldFieldToInt();
+            return;
         }
 
-        private SudokuSolver(int[][] field)
+        private SudokuSolver(int[,] field) : this()
         {
             FieldIntToField(field);
+        }
+        private SudokuSolver(int[][] field):this()
+        {
+            FieldIntToField(field);
+        }
+        private SudokuSolver()
+        {
             numbersToExclude = new List<int>();
             fieldsToActOn = new List<SudokuField>();
-            x = 0;
-            y = 0;
         }
 
         private bool HorizontalTest(bool guess = false)
@@ -172,22 +190,24 @@ namespace SudokuSolverStatic
             return false;
         }
 
-        private object LoopTroughSudoku(Func<object> action)
+        private void FieldIntToField(int[,] field)
         {
-            for(; x < sudoku.GetLength(0); x++)
+            sudoku = new SudokuField[maxNumber, maxNumber];
+            for (int x = 0; x < field.GetLength(0); x++)
             {
-                for (; y < sudoku.GetLength(0); y++)
+                for (int y = 0; y < field.GetLength(0); y++)
                 {
-                    object returner = action();
-                    if (returner != null)
+                    if (field[x,y] == 0)
                     {
-                        return returner;
+                        sudoku[x, y] = new SudokuField(minNumber, maxNumber);
+                    }
+                    else
+                    {
+                        sudoku[x, y] = new SudokuField(minNumber, maxNumber, field[x,y]);
                     }
                 }
             }
-            return null;
         }
-
         private void FieldIntToField(int[][] field)
         {
             sudoku = new SudokuField[maxNumber, maxNumber];
@@ -206,7 +226,27 @@ namespace SudokuSolverStatic
                 }
             }
         }
-        private int[][] FieldFieldToInt()
+        private int[,] FieldFieldToInt()
+        {
+            int[,] field = new int[sudoku.GetLength(0), sudoku.GetLength(1)];
+            for (int x = 0; x < sudoku.GetLength(0); x++)
+            {
+                for (int y = 0; y < sudoku.GetLength(1); y++)
+                {
+                    int? number = sudoku[x, y].GetNumber();
+                    if (number != null)
+                    {
+                        field[x,y] = (int)number;
+                    }
+                    else
+                    {
+                        field[x,y] = 0;
+                    }
+                }
+            }
+            return field;
+        }
+        private int[][] FieldFieldToIntJagged()
         {
             int[][] field = new int[sudoku.GetLength(0)][];
             for(int x = 0; x < sudoku.GetLength(0); x++)
@@ -214,10 +254,10 @@ namespace SudokuSolverStatic
                 field[x] = new int[sudoku.GetLength(1)];
                 for (int y = 0; y < sudoku.GetLength(1); y++)
                 {
-                    //!!! remove if
-                    if(sudoku[x, y].GetNumber()!=null)
+                    int? number = sudoku[x, y].GetNumber();
+                    if (number != null)
                     {
-                        field[x][y] = (int)sudoku[x, y].GetNumber();
+                        field[x][y] = (int)number;
                     }
                     else
                     {
@@ -227,6 +267,7 @@ namespace SudokuSolverStatic
             }
             return field;
         }
+
         private bool ExcludeNumbersToExludeFromFieldsToActOn(bool guess = false)
         {
             foreach (SudokuField field in fieldsToActOn)
