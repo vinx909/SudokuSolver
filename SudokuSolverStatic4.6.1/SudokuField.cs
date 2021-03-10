@@ -92,7 +92,6 @@ namespace SudokuSolverStatic
 
         internal bool SetNumber(int number, Certainty certainty = defaultCertaintySetNumber, bool test = true)
         {
-
             foreach (Option option in Options)
             {
                 if (option.Number == number)
@@ -113,7 +112,7 @@ namespace SudokuSolverStatic
                 {
                     option.Certainty = Certainty.CanNotBe;
                 }
-                else if (certainty == Certainty.FiguredOutOnGuess && option.Certainty == Certainty.CanBe)
+                else if ((certainty == Certainty.FiguredOutOnGuess || certainty == Certainty.Guess) && option.Certainty == Certainty.CanBe)
                 {
                     option.Certainty = Certainty.CanNotBeOnGuess;
                 }

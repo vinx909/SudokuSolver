@@ -128,15 +128,20 @@ namespace SudokuSolverStatic
             bool solveable = false;
             Random random = new Random();
             List<int[]> indexes = solver.GetIndexes();
+            int perfectRandomOptionIndex = 1;
+            for( int i = 1; i<= 1 + maxNumber - minNumber; i++)
+            {
+                perfectRandomOptionIndex *= i;
+            }
             while(solveable == false)
             {
-                int randomIndex = random.Next(indexes.Count());
-                solver.SetValueAtIndex(indexes[randomIndex][0], indexes[randomIndex][1]);
-                indexes.Remove(indexes[randomIndex]);
                 Solve(solver, false);
+                int randomIndex = random.Next(indexes.Count());
+                solver.SetValueAtIndex(indexes[randomIndex][0], indexes[randomIndex][1], random.Next(perfectRandomOptionIndex));
+                indexes.Remove(indexes[randomIndex]);
                 solveable = solver.CheckIfFinished();
+                solver.RemoveAllButSet();
             }
-            solver.RemoveAllButSet();
         }
 
         private SudokuSolver(int width, int height):this()
@@ -399,11 +404,12 @@ namespace SudokuSolverStatic
             }
             return indexes;
         }
-        private void SetValueAtIndex(int x, int y)
+        private void SetValueAtIndex(int x, int y, int optionIndex = 0)
         {
-            IEnumerable<int> options = sudoku[x, y].GetNumbers();
+            List<int> options = (List<int>)sudoku[x, y].GetNumbers();
             if (options.Count() > 0)
             {
+                int option = options[optionIndex % options.Count()];
                 sudoku[x, y].SetNumber(options.FirstOrDefault(), SudokuField.Certainty.Set);
             }
         }
