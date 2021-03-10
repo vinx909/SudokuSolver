@@ -45,6 +45,13 @@ namespace SudokuSolverStatic
             return solver.FieldFieldToIntJagged();
         }
 
+        public static int[][] Create()
+        {
+            SudokuSolver solver = new SudokuSolver(maxNumber, maxNumber);
+            Create(solver);
+            return solver.FieldFieldToIntJagged();
+        }
+
         public static void Solve(SudokuSolver solver, bool willGuess = true)
         {
             bool finished = false;
@@ -116,7 +123,26 @@ namespace SudokuSolverStatic
            
             return;
         }
+        public static void Create(SudokuSolver solver)
+        {
+            bool solveable = false;
+            Random random = new Random();
+            List<int[]> indexes = solver.GetIndexes();
+            while(solveable == false)
+            {
+                int randomIndex = random.Next(indexes.Count());
+                solver.SetValueAtIndex(indexes[randomIndex][0], indexes[randomIndex][1]);
+                indexes.Remove(indexes[randomIndex]);
+                Solve(solver, false);
+                solveable = solver.CheckIfFinished();
+            }
+            solver.RemoveAllButSet();
+        }
 
+        private SudokuSolver(int width, int height):this()
+        {
+            FieldWidthHeight(width, height);
+        }
         private SudokuSolver(int[,] field) : this()
         {
             FieldIntToField(field);
@@ -361,12 +387,51 @@ namespace SudokuSolverStatic
             return addition;
         }
 
+        private List<int[]> GetIndexes()
+        {
+            List<int[]> indexes = new List<int[]>();
+            for (int x = 0; x < sudoku.GetLength(0); x++)
+            {
+                for (int y = 0; y < sudoku.GetLength(1); y++)
+                {
+                    indexes.Add(new int[]{ x, y});
+                }
+            }
+            return indexes;
+        }
+        private void SetValueAtIndex(int x, int y)
+        {
+            IEnumerable<int> options = sudoku[x, y].GetNumbers();
+            if (options.Count() > 0)
+            {
+                sudoku[x, y].SetNumber(options.FirstOrDefault(), SudokuField.Certainty.Set);
+            }
+        }
+        private void RemoveAllButSet()
+        {
+            foreach(SudokuField field in sudoku)
+            {
+                field.RemoveAllBut();
+            }
+        }
+
+        private void FieldWidthHeight(int width, int height)
+        {
+            sudoku = new SudokuField[width, height];
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    sudoku[x, y] = new SudokuField(minNumber, maxNumber);
+                }
+            }
+        }
         private void FieldIntToField(int[,] field)
         {
             sudoku = new SudokuField[maxNumber, maxNumber];
             for (int x = 0; x < field.GetLength(0); x++)
             {
-                for (int y = 0; y < field.GetLength(0); y++)
+                for (int y = 0; y < field.GetLength(1); y++)
                 {
                     if (field[x,y] == 0)
                     {
@@ -507,7 +572,7 @@ namespace SudokuSolverStatic
         {
             for (int x = 0; x < sudoku.GetLength(0); x++)
             {
-                for (int y = 0; y < sudoku.GetLength(0); y++)
+                for (int y = 0; y < sudoku.GetLength(1); y++)
                 {
                     if (sudoku[x, y].GetNumber() == null)
                     {

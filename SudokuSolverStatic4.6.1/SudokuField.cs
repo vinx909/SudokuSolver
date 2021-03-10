@@ -62,6 +62,21 @@ namespace SudokuSolverStatic
             }
             return null;
         }
+        internal int? GetSetNumber()
+        {
+            foreach (Option option in Options)
+            {
+                if(option.Certainty == Certainty.Set)
+                {
+                    return option.Number;
+                }
+                else if (CertaintyIsOfSingleInstance(option.Certainty))
+                {
+                    break;
+                }
+            }
+            return null;
+        }
         internal IEnumerable<int> GetNumbers()
         {
             List<int> numbers = new List<int>();
@@ -82,9 +97,12 @@ namespace SudokuSolverStatic
             {
                 if (option.Number == number)
                 {
-                    if(certainty == Certainty.CanBe)
+                    if(certainty == Certainty.CanNotBeOnGuess)
                     {
-                        if (option.Certainty == Certainty.CanNotBeOnGuess) ;
+                        if (option.Certainty == Certainty.CanBe)
+                        {
+                            option.Certainty = certainty;
+                        }
                     }
                     else
                     {                        
@@ -100,7 +118,7 @@ namespace SudokuSolverStatic
                     option.Certainty = Certainty.CanNotBeOnGuess;
                 }
             }
-            if (test == true)
+            if (test == true || CertaintyIsOfSingleInstance(certainty))
             {
                 return TryFigureOut();
             }
@@ -109,7 +127,6 @@ namespace SudokuSolverStatic
                 return false;
             }
         }
-
         internal bool SetNumbers(IEnumerable<int> numbers, Certainty certainty = defaultCertaintySetNumbers)
         {
             if (numbers.Count() > 1)
@@ -131,6 +148,16 @@ namespace SudokuSolverStatic
             foreach (Option option in Options)
             {
                 if (option.Certainty == Certainty.Guess || option.Certainty == Certainty.CanNotBeOnGuess || option.Certainty == Certainty.FiguredOutOnGuess)
+                {
+                    option.Certainty = Certainty.CanBe;
+                }
+            }
+        }
+        internal void RemoveAllBut(Certainty certainty = Certainty.Set)
+        {
+            foreach(Option option in Options)
+            {
+                if(option.Certainty != certainty)
                 {
                     option.Certainty = Certainty.CanBe;
                 }
