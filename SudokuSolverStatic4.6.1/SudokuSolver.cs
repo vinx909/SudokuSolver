@@ -8,6 +8,8 @@ namespace SudokuSolverStatic
 {
     public class SudokuSolver
     {
+        static SudokuBoard board;
+
         public static int[,] Solve(int[,] sudoku)
         {
             SudokuBoard board = new SudokuBoard(sudoku);
@@ -18,7 +20,14 @@ namespace SudokuSolverStatic
         public static int[][] Solve(int[][] sudoku)
         {
             SudokuBoard board = new SudokuBoard(sudoku);
-            board = Solve(board);
+            /*
+            if(SudokuSolver.board == null)
+            {
+                SudokuSolver.board = board;
+            }
+            */
+            /**/board = Solve(board);
+            //board = Solve();
             sudoku = board.GetAsJaggedArray();
             return sudoku;
         }
@@ -93,6 +102,16 @@ namespace SudokuSolverStatic
                         board.SquareExclusionOnOnlyPositionsThatFit();
                         goto case 0;
                     case 7:
+                        if (willGuess)
+                        {
+                            board.MakeGuess();
+                            goto case 0;
+                        }
+                        else
+                        {
+                            goto case 8;
+                        }
+                    case 8:
                         return board;
                 }
             }

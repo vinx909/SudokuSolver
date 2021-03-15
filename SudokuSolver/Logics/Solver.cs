@@ -11,7 +11,18 @@ namespace SudokuSolver.Logics
     {
         public int[][] Solve(int[][] sudoku)
         {
-            int[][] solvedSudoku = SudokuSolverStatic.SudokuSolver.Solve(sudoku);
+            /*
+            int[][] test = new int[][]{
+                new int[]{0,0,0,0,0,0},
+                new int[]{0,0, 0, 0 ,0,0},
+                new int[]{0,0, 0, 0 ,0,0},
+                new int[]{0,0, 0, 0 ,0,0},
+                new int[]{0,0, 0, 0 ,0,0},
+                new int[]{0,0, 0, 0 ,0,0}
+            };
+            int[][] solvedSudoku = SudokuSolverStatic.SudokuSolver.Solve(test);
+            */
+            /**/int[][] solvedSudoku = SudokuSolverStatic.SudokuSolver.Solve(sudoku);
             return solvedSudoku;
         }
 

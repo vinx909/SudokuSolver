@@ -15,6 +15,9 @@ namespace SudokuSolverStatic
             FourByFour,
             TwoByTwo
         }
+
+        private const string exceptionNoEmptySpotToGuessFor = "trying to fill an empty stop when no empty spot can be found";
+        private const string exceptionNoGuessToGuessIn = "trying to make a different guess when there is no guess";
         private static Dictionary<BoardPropperty, BoardProppertySet> boardPropperties = new Dictionary<BoardPropperty, BoardProppertySet>
         {
             { BoardPropperty.NineByNine, new BoardProppertySet { BoardWidth = 9, BoardHeight = 9, SquareWidth = 3, SquareHeight = 3, MinNumber = 1, MaxNumber = 9 } },
@@ -37,6 +40,7 @@ namespace SudokuSolverStatic
 
         private readonly BoardPropperty boardPropperty;
         private SudokuField[,] board;
+        private List<GuessDetails> guesses;
 
         public bool Changed { get; set; }
         public bool ChangedExcluding { get; set; }
@@ -230,6 +234,95 @@ namespace SudokuSolverStatic
             }
         }
 
+        public void MakeGuess()
+        {
+            if(guesses == null)
+            {
+                guesses = new List<GuessDetails>();
+            }
+            bool goBackOneGuess = false;
+            if(SimpleHorisontalTest() && SimpleVerticalTest() && SimpleSquareTest() && !Finished)
+            {
+                goBackOneGuess = MakeGuessFillEmpty();
+            }
+            else
+            {
+                goBackOneGuess = MakeGuessTryDifferentGuess();
+            }
+            if(goBackOneGuess == true)
+            {
+                MakeGuessGoBackOneGuess();
+            }
+            MakeGuessApplyAllGuesses();
+            Changed = true;
+        } 
+        private bool MakeGuessFillEmpty()
+        {
+            for (int x = 0; x < boardPropperties[boardPropperty].BoardWidth; x++)
+            {
+                for (int y = 0; y < boardPropperties[boardPropperty].BoardHeight; y++)
+                {
+                    if (board[x,y].GetNumber() == null)
+                    {
+                        guesses.Add(new GuessDetails { X = x, Y = y });
+                        return MakeGuessTryDifferentGuess(true);
+                    }
+                }
+            }
+            throw new Exception(exceptionNoEmptySpotToGuessFor);
+        }
+        private bool MakeGuessTryDifferentGuess(bool firstGuess = false)
+        {
+            MakeGuessRemoveGuessExclusionsAndSets();
+            int guessIndex = guesses.Count() - 1;
+            if (guessIndex < 0)
+            {
+                throw new Exception(exceptionNoGuessToGuessIn);
+            }
+            GuessDetails guess = guesses[guessIndex];
+            if(firstGuess == false)
+            {
+                guess.AddFailedGuess(guess.Guess);
+            }
+            IEnumerable<int> guessOptions = guess.getGuessOptions(board[guess.X, guess.Y]);
+            if(guessOptions.Count() == 0)
+            {
+                return true;
+            }
+            guess.Guess = guessOptions.FirstOrDefault();
+            return false;
+        }
+        private void MakeGuessGoBackOneGuess()
+        {
+            int guessIndex = guesses.Count() - 1;
+            if (guessIndex < 0)
+            {
+                throw new Exception(exceptionNoGuessToGuessIn);
+            }
+            guesses.Remove(guesses[guessIndex]);
+            bool removeAnotherGuess = MakeGuessTryDifferentGuess();
+            if(removeAnotherGuess == true)
+            {
+                MakeGuessGoBackOneGuess();
+            }
+        }
+        private void MakeGuessRemoveGuessExclusionsAndSets()
+        {
+            for (int x = 0; x < boardPropperties[boardPropperty].BoardWidth; x++)
+            {
+                for (int y = 0; y < boardPropperties[boardPropperty].BoardHeight; y++)
+                {
+                    board[x, y].RemoveGuesses();
+                }
+            }
+        }
+        private void MakeGuessApplyAllGuesses()
+        {
+            foreach(GuessDetails guess in guesses)
+            {
+                board[guess.X, guess.Y].SetNumber(guess.Guess, SudokuField.Certainty.Guess);
+            }
+        }
 
         public bool SimpleHorisontalTest()
         {
@@ -431,11 +524,11 @@ namespace SudokuSolverStatic
                 {
                     if (field[x, y] == 0)
                     {
-                        board[x, y] = new SudokuField(boardPropperties[boardPropperty].MinNumber, boardPropperties[boardPropperty].MaxNumber);
+                        board[x, y] = createreateSudokuField(boardPropperties[boardPropperty].MinNumber, boardPropperties[boardPropperty].MaxNumber);
                     }
                     else
                     {
-                        board[x, y] = new SudokuField(boardPropperties[boardPropperty].MinNumber, boardPropperties[boardPropperty].MaxNumber, field[x, y]);
+                        board[x, y] = createreateSudokuFieldWithSetNumber(boardPropperties[boardPropperty].MinNumber, boardPropperties[boardPropperty].MaxNumber, field[x, y]);
                     }
                 }
             }
@@ -450,11 +543,11 @@ namespace SudokuSolverStatic
                 {
                     if (field[x][y] == 0)
                     {
-                        board[x, y] = new SudokuField(boardPropperties[boardPropperty].MinNumber, boardPropperties[boardPropperty].MaxNumber);
+                        board[x, y] = createreateSudokuField(boardPropperties[boardPropperty].MinNumber, boardPropperties[boardPropperty].MaxNumber);
                     }
                     else
                     {
-                        board[x, y] = new SudokuField(boardPropperties[boardPropperty].MinNumber, boardPropperties[boardPropperty].MaxNumber, field[x][y]);
+                        board[x, y] = createreateSudokuFieldWithSetNumber(boardPropperties[boardPropperty].MinNumber, boardPropperties[boardPropperty].MaxNumber, field[x][y]);
                     }
                 }
             }
@@ -482,10 +575,16 @@ namespace SudokuSolverStatic
         }
         public int[][] GetAsJaggedArray()
         {
-            int[][] field = new int[board.GetLength(0)][];
+            int[][] field = new int[9][];
+            for(int i = 0; i < 9; i++)
+            {
+                field[i] = new int[9];
+            }
+
+            //int[][] field = new int[board.GetLength(0)][];
             for (int x = 0; x < board.GetLength(0); x++)
             {
-                field[x] = new int[board.GetLength(1)];
+                //field[x] = new int[board.GetLength(1)];
                 for (int y = 0; y < board.GetLength(1); y++)
                 {
                     int? number = board[x, y].GetNumber();
@@ -525,6 +624,27 @@ namespace SudokuSolverStatic
             }
             public int MinNumber { get; set; }
             public int MaxNumber { get; set; }
+        }
+        internal class GuessDetails
+        {
+            private List<int> failedGuesses;
+            internal int X { get; set; }
+            internal int Y { get; set; }
+            internal int Guess { get; set; }
+            internal GuessDetails()
+            {
+                failedGuesses = new List<int>();
+            }
+            internal void AddFailedGuess(int guess)
+            {
+                failedGuesses.Add(guess);
+            }
+            internal IEnumerable<int> getGuessOptions(SudokuField field)
+            {
+                List<int> options = (List<int>)field.GetNumbers();
+                options.RemoveAll(number => failedGuesses.Contains(number));
+                return options;
+            }
         }
     }
 }
