@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SudokuSolverStatic
 {
-    internal class SudokuField
+    public class SudokuField
     {
         internal enum Certainty
         {
