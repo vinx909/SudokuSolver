@@ -8,121 +8,96 @@ namespace SudokuSolverStatic
 {
     public class SudokuSolver
     {
-        private const int minNumber = 1;
-        private const int maxNumber = 9;
-        private const int squareWidth = 3;
-        private const int squareHeight = 3;
-        private const int guessStartNumber = -1;
-
-        private int guessx;
-        private int guessy;
-        private int guessNumber;
-
-        private const string exceptionWrongFieldLength = "the sudoku field must be 9 by 9";
-
-        private SudokuField[,] sudoku;
-        private readonly List<int> numbersToWorkWith;
-        private readonly List<SudokuField> fieldsToActOn;
-
-        public static int[,] Solve(int[,] field, bool willGuess = true)
+        public static int[,] Solve(int[,] sudoku)
         {
-            if (field.GetLength(0) != maxNumber || field.GetLength(1) != maxNumber)
-            {
-                throw new Exception(exceptionWrongFieldLength);
-            }
-            SudokuSolver solver = new SudokuSolver(field);
-            Solve(solver, willGuess);
-            return solver.FieldFieldToInt();
+            SudokuBoard board = new SudokuBoard(sudoku);
+            board = Solve(board);
+            sudoku = board.GetAsMultidimentionalArray();
+            return sudoku;
         }
-        public static int[][] Solve(int[][] field, bool willGuess = true)
+        public static int[][] Solve(int[][] sudoku)
         {
-            if (field.Length != maxNumber || field[0].Length != maxNumber)
-            {
-                throw new Exception(exceptionWrongFieldLength);
-            }
-            SudokuSolver solver = new SudokuSolver(field);
-            Solve(solver, willGuess);
-            return solver.FieldFieldToIntJagged();
+            SudokuBoard board = new SudokuBoard(sudoku);
+            board = Solve(board);
+            sudoku = board.GetAsJaggedArray();
+            return sudoku;
         }
-
-        public static int[][] Create()
+        public static SudokuBoard Solve(SudokuBoard board, bool willGuess = true)
         {
-            SudokuSolver solver = new SudokuSolver(maxNumber, maxNumber);
-            Create(solver);
-            return solver.FieldFieldToIntJagged();
-        }
-
-        public static void Solve(SudokuSolver solver, bool willGuess = true)
-        {
-            bool finished = false;
-            bool guess = false;
-
             int solveState = 1;
-            bool addition = false;
+            int highestSolveState = 0;
+            int numberOfLoops = 0;
 
-            while(finished == false)
+            while (true)
             {
                 switch (solveState)
                 {
                     case 0:
-                        if (addition == true)
+                        numberOfLoops++;
+                        if (board.Changed == true)
                         {
-                            finished = solver.CheckIfFinished();
-                            if (finished == true)
+                            highestSolveState = Math.Max(solveState, highestSolveState);
+                            if (board.Finished == true)
                             {
-                                return;
+                                return board;
+                            }
+                            board.Changed = false;
+                            board.ChangedExcluding = false;
+                            if (solveState == 1)
+                            {
+                                solveState++;
                             }
                             else
                             {
                                 solveState = 1;
-                                goto case 1;
                             }
+                            break;
+                        }
+                        else if (solveState > 3 && board.ChangedExcluding == true)
+                        {
+                            if (solveState == 4)
+                            {
+                                board.ChangedExcluding = false;
+                                solveState++;
+                            }
+                            else
+                            {
+                                solveState = 4;
+                            }
+                            break;
                         }
                         else
                         {
                             solveState++;
-                            break; ;
+                            break;
                         }
 
                     case 1:
-                        addition = solver.HorizontalExcluder(guess);
+                        board.SimpleHorisontalExclusion();
                         goto case 0;
 
                     case 2:
-                        addition = solver.VerticalExcluder(guess);
+                        board.SimpleVerticalExclusion();
                         goto case 0;
                     case 3:
-                        addition = solver.SquareExcluder(guess);
+                        board.SimpleSquareExclusion();
                         goto case 0;
                     case 4:
-                        addition = solver.HorizontalTest(guess);
+                        board.ChangedExcluding = false;
+                        board.HorizontalExclusionOnOnlyPositionsThatFit();
                         goto case 0;
                     case 5:
-                        addition = solver.VerticalTest(guess);
+                        board.VerticalExclusionOnOnlyPositionsThatFit();
                         goto case 0;
                     case 6:
-                        addition = solver.SquareTest(guess);
+                        board.SquareExclusionOnOnlyPositionsThatFit();
                         goto case 0;
                     case 7:
-                        if (willGuess == true)
-                        {
-                            guess = true;
-                            guess = !solver.Guess();
-                            solveState = 0;
-                            goto case 0;
-                        }
-                        else
-                        {
-                            goto case 8;
-                        }
-                    case 8:
-                        finished = true;
-                        break;
+                        return board;
                 }
             }
-           
-            return;
         }
+        /*
         public static void Create(SudokuSolver solver)
         {
             bool solveable = false;
@@ -143,116 +118,7 @@ namespace SudokuSolverStatic
                 solver.RemoveAllButSet();
             }
         }
-
-        private SudokuSolver(int width, int height):this()
-        {
-            FieldWidthHeight(width, height);
-        }
-        private SudokuSolver(int[,] field) : this()
-        {
-            FieldIntToField(field);
-        }
-        private SudokuSolver(int[][] field) :this()
-        {
-            FieldIntToField(field);
-        }
-        private SudokuSolver()
-        {
-            numbersToWorkWith = new List<int>();
-            fieldsToActOn = new List<SudokuField>();
-            guessx = guessStartNumber;
-            guessy = guessStartNumber;
-            guessNumber = guessStartNumber;
-        }
-
-        private bool HorizontalExcluder(bool guess = false)
-        {
-            bool addition = false;
-            for (int y = 0; y < sudoku.GetLength(0); y++)
-            {
-                numbersToWorkWith.Clear();
-                fieldsToActOn.Clear();
-                for (int x = 0; x < sudoku.GetLength(0); x++)
-                {
-                    int? number = sudoku[x, y].GetNumber();
-                    if (number != null)
-                    {
-                        numbersToWorkWith.Add((int)number);
-                    }
-                    else
-                    {
-                        fieldsToActOn.Add(sudoku[x, y]);
-                    }
-                }
-                bool additionTest = ExcludeNumbersFromFieldsToActOn(guess);
-                if (additionTest == true && addition != true)
-                {
-                    addition = true;
-                }
-            }
-            return addition;
-        }
-        private bool VerticalExcluder(bool guess = false)
-        {
-            bool addition = false;
-            for (int x = 0; x < sudoku.GetLength(0); x++)
-            {
-                numbersToWorkWith.Clear();
-                fieldsToActOn.Clear();
-                for (int y = 0; y < sudoku.GetLength(0); y++)
-                {
-                    int? number = sudoku[x, y].GetNumber();
-                    if(number != null)
-                    {
-                        numbersToWorkWith.Add((int)number);
-                    }
-                    else
-                    {
-                        fieldsToActOn.Add(sudoku[x, y]);
-                    }
-                }
-                bool additionTest = ExcludeNumbersFromFieldsToActOn(guess);
-                if (additionTest == true && addition != true)
-                {
-                    addition = true;
-                }
-            }
-            return addition;
-        }
-        private bool SquareExcluder(bool guess = false)
-        {
-            bool addition = false;
-            for (int xpart1 = 0; xpart1 * squareWidth < sudoku.GetLength(0); xpart1++)
-            {
-                for (int ypart1 = 0; ypart1 * squareHeight < sudoku.GetLength(1); ypart1++)
-                {
-                    numbersToWorkWith.Clear();
-                    fieldsToActOn.Clear();
-                    for (int xpart2 = 0; xpart2 < squareWidth; xpart2++)
-                    {
-                        for (int ypart2 = 0; ypart2 < squareHeight; ypart2++)
-                        {
-                            SudokuField field = sudoku[xpart1 * squareWidth + xpart2, ypart1 * squareHeight + ypart2];
-                            int? number = field.GetNumber();
-                            if (number != null)
-                            {
-                                numbersToWorkWith.Add((int)number);
-                            }
-                            else
-                            {
-                                fieldsToActOn.Add(field);
-                            }
-                        }
-                    }
-                    bool additionTest = ExcludeNumbersFromFieldsToActOn(guess);
-                    if (additionTest == true && addition != true)
-                    {
-                        addition = true;
-                    }
-                }
-            }
-            return addition;
-        }
+        
 
         private bool HorizontalTest(bool guess = false)
         {
@@ -588,5 +454,6 @@ namespace SudokuSolverStatic
             }
             return true;
         }
+        */
     }
 }

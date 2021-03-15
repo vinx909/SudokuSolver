@@ -38,18 +38,30 @@ namespace SudokuSolverStatic
         private readonly BoardPropperty boardPropperty;
         private SudokuField[,] board;
 
-        private List<int> numbersToWorkWith;
-        private List<SudokuField> fieldsToWorkWith;
-
         public bool Changed { get; set; }
+        public bool ChangedExcluding { get; set; }
         public bool Guess { get; set; }
+        public bool Finished
+        {
+            get
+            {
+                foreach(SudokuField field in board)
+                {
+                    if(field.GetNumber() == null)
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
 
 
-        public SudokuBoard(int[,] board, BoardPropperty boardPropperty = BoardPropperty.NineByNine) :this(boardPropperty)
+        public SudokuBoard(int[,] board, BoardPropperty boardPropperty = BoardPropperty.NineByNine) : this(boardPropperty)
         {
             SetField(board);
         }
-        public SudokuBoard(int[][] board, BoardPropperty boardPropperty = BoardPropperty.NineByNine) :this(boardPropperty)
+        public SudokuBoard(int[][] board, BoardPropperty boardPropperty = BoardPropperty.NineByNine) : this(boardPropperty)
         {
             SetField(board);
         }
@@ -58,8 +70,6 @@ namespace SudokuSolverStatic
             this.boardPropperty = boardPropperty;
             createreateSudokuField = defaultCreatereateSudokuField;
             createreateSudokuFieldWithSetNumber = defaultCreatereateSudokuFieldWithSetNumber;
-            numbersToWorkWith = new List<int>();
-            fieldsToWorkWith = new List<SudokuField>();
             Changed = false;
             Guess = false;
         }
@@ -85,24 +95,26 @@ namespace SudokuSolverStatic
         }
 
 
-        public void SimpleHorizontalExclusion()
+        public void SimpleHorisontalExclusion()
         {
             if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
             {
+                List<int> numbers = new List<int>();
+                List<SudokuField> fields = new List<SudokuField>();
                 for (int y = 0; y < boardPropperties[boardPropperty].BoardHeight; y++)
                 {
-                    numbersToWorkWith.Clear();
-                    fieldsToWorkWith.Clear();
+                    numbers.Clear();
+                    fields.Clear();
                     for (int x = 0; x < boardPropperties[boardPropperty].BoardWidth; x++)
                     {
                         int? number = board[x, y].GetNumber();
                         if (number != null)
                         {
-                            numbersToWorkWith.Add((int)number);
+                            numbers.Add((int)number);
                         }
-                        fieldsToWorkWith.Add(board[x, y]);
+                        fields.Add(board[x, y]);
                     }
-                    ExcludeNumbersFromFields(numbersToWorkWith, fieldsToWorkWith);
+                    ExcludeNumbersFromFields(numbers, fields);
                 }
             }
         }
@@ -110,20 +122,22 @@ namespace SudokuSolverStatic
         {
             if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
             {
+                List<int> numbers = new List<int>();
+                List<SudokuField> fields = new List<SudokuField>();
                 for (int x = 0; x < boardPropperties[boardPropperty].BoardHeight; x++)
                 {
-                    numbersToWorkWith.Clear();
-                    fieldsToWorkWith.Clear();
+                    numbers.Clear();
+                    fields.Clear();
                     for (int y = 0; y < boardPropperties[boardPropperty].BoardWidth; y++)
                     {
                         int? number = board[x, y].GetNumber();
                         if (number != null)
                         {
-                            numbersToWorkWith.Add((int)number);
+                            numbers.Add((int)number);
                         }
-                        fieldsToWorkWith.Add(board[x, y]);
+                        fields.Add(board[x, y]);
                     }
-                    ExcludeNumbersFromFields(numbersToWorkWith, fieldsToWorkWith);
+                    ExcludeNumbersFromFields(numbers, fields);
                 }
             }
         }
@@ -131,12 +145,14 @@ namespace SudokuSolverStatic
         {
             if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
             {
-                for(int xSquare = 0; xSquare < boardPropperties[boardPropperty].NumberOfHorizontalSquares; xSquare++)
+                List<int> numbers = new List<int>();
+                List<SudokuField> fields = new List<SudokuField>();
+                for (int xSquare = 0; xSquare < boardPropperties[boardPropperty].NumberOfHorizontalSquares; xSquare++)
                 {
                     for (int ySquare = 0; ySquare < boardPropperties[boardPropperty].NumberOfVerticalSquares; ySquare++)
                     {
-                        numbersToWorkWith.Clear();
-                        fieldsToWorkWith.Clear();
+                        numbers.Clear();
+                        fields.Clear();
                         for (int xInternal = 0; xInternal < boardPropperties[boardPropperty].SquareWidth; xInternal++)
                         {
                             for (int yInternal = 0; yInternal < boardPropperties[boardPropperty].SquareHeight; yInternal++)
@@ -146,36 +162,257 @@ namespace SudokuSolverStatic
                                 int? number = board[x, y].GetNumber();
                                 if (number != null)
                                 {
-                                    numbersToWorkWith.Add((int)number);
+                                    numbers.Add((int)number);
                                 }
-                                fieldsToWorkWith.Add(board[x, y]);
+                                fields.Add(board[x, y]);
                             }
                         }
-                        ExcludeNumbersFromFields(numbersToWorkWith, fieldsToWorkWith);
+                        ExcludeNumbersFromFields(numbers, fields);
+                    }
+                }
+            }
+        }
+
+        public void HorizontalExclusionOnOnlyPositionsThatFit()
+        {
+            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            {
+                List<SudokuField> fields = new List<SudokuField>();
+                for(int y = 0; y < board.GetLength(1); y++)
+                {
+                    fields.Clear();
+                    for(int x = 0; x < board.GetLength(0); x++)
+                    {
+                        fields.Add(board[x, y]);
+                    }
+                    FindWhichOfNumbersItMustBeByOnlyFieldWhereNumbersFits(fields);
+                }
+            }
+        }
+        public void VerticalExclusionOnOnlyPositionsThatFit()
+        {
+            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            {
+                List<SudokuField> fields = new List<SudokuField>();
+                for (int x = 0; x < board.GetLength(0); x++)
+                {
+                    fields.Clear();
+                    for (int y = 0; y < board.GetLength(1); y++)
+                    {
+                        fields.Add(board[x, y]);
+                    }
+                    FindWhichOfNumbersItMustBeByOnlyFieldWhereNumbersFits(fields);
+                }
+            }
+        }
+        public void SquareExclusionOnOnlyPositionsThatFit()
+        {
+            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            {
+                List<SudokuField> fields = new List<SudokuField>();
+                for(int xSquare = 0; xSquare < boardPropperties[boardPropperty].NumberOfHorizontalSquares; xSquare++)
+                {
+                    for (int ySquare = 0; ySquare < boardPropperties[boardPropperty].NumberOfVerticalSquares; ySquare++)
+                    {
+                        fields.Clear();
+                        for(int xInSquare = 0; xInSquare < boardPropperties[boardPropperty].SquareWidth; xInSquare++)
+                        {
+                            for(int yInSquare = 0; yInSquare < boardPropperties[boardPropperty].SquareHeight; yInSquare++)
+                            {
+                                int x = xSquare * boardPropperties[boardPropperty].SquareWidth + xInSquare;
+                                int y = ySquare * boardPropperties[boardPropperty].SquareHeight + yInSquare;
+                                fields.Add(board[x, y]);
+                            }
+                        }
+                        FindWhichOfNumbersItMustBeByOnlyFieldWhereNumbersFits(fields);
                     }
                 }
             }
         }
 
 
+        public bool SimpleHorisontalTest()
+        {
+            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            {
+                List<int> numbers = new List<int>();
+                for (int y = 0; y < boardPropperties[boardPropperty].BoardHeight; y++)
+                {
+                    numbers.Clear();
+                    for (int x = 0; x < boardPropperties[boardPropperty].BoardWidth; x++)
+                    {
+                        int? number = board[x, y].GetNumber();
+                        if (number != null)
+                        {
+                            numbers.Add((int)number);
+                        }
+                    }
+                    bool noNumberMoreThenOnce = NoNumberMoreThenOnce(numbers);
+                    if (noNumberMoreThenOnce == false)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        public bool SimpleVerticalTest()
+        {
+            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            {
+                List<int> numbers = new List<int>();
+                for (int x = 0; x < boardPropperties[boardPropperty].BoardHeight; x++)
+                {
+                    numbers.Clear();
+                    for (int y = 0; y < boardPropperties[boardPropperty].BoardWidth; y++)
+                    {
+                        int? number = board[x, y].GetNumber();
+                        if (number != null)
+                        {
+                            numbers.Add((int)number);
+                        }
+                    }
+                    bool noNumberMoreThenOnce = NoNumberMoreThenOnce(numbers);
+                    if (noNumberMoreThenOnce == false)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        public bool SimpleSquareTest()
+        {
+            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            {
+                List<int> numbers = new List<int>();
+                List<SudokuField> fields = new List<SudokuField>();
+                for (int xSquare = 0; xSquare < boardPropperties[boardPropperty].NumberOfHorizontalSquares; xSquare++)
+                {
+                    for (int ySquare = 0; ySquare < boardPropperties[boardPropperty].NumberOfVerticalSquares; ySquare++)
+                    {
+                        numbers.Clear();
+                        fields.Clear();
+                        for (int xInternal = 0; xInternal < boardPropperties[boardPropperty].SquareWidth; xInternal++)
+                        {
+                            for (int yInternal = 0; yInternal < boardPropperties[boardPropperty].SquareHeight; yInternal++)
+                            {
+                                int x = xSquare * boardPropperties[boardPropperty].SquareWidth + xInternal;
+                                int y = ySquare * boardPropperties[boardPropperty].SquareHeight + yInternal;
+                                int? number = board[x, y].GetNumber();
+                                if (number != null)
+                                {
+                                    numbers.Add((int)number);
+                                }
+                                fields.Add(board[x, y]);
+                            }
+                        }
+                        bool noNumberMoreThenOnce = NoNumberMoreThenOnce(numbers);
+                        if(noNumberMoreThenOnce == false)
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+
         private void ExcludeNumbersFromFields(IEnumerable<int> numbers, IEnumerable<SudokuField> fields)
         {
             SudokuField.Certainty toSetTo = SudokuField.Certainty.CanNotBe;
-            if(Guess == true)
+            if (Guess == true)
             {
                 toSetTo = SudokuField.Certainty.CanNotBeOnGuess;
             }
 
-            foreach(SudokuField field in fields)
+            foreach (SudokuField field in fields)
             {
-                bool newChange = field.SetNumbers(numbers, toSetTo);
-                Changed = Changed || newChange;
+                SudokuField.ChangeType newChange = field.SetNumbers(numbers, toSetTo);
+                ChangeController(newChange);
+            }
+        }
+        private void FindWhichOfNumbersItMustBeByOnlyFieldWhereNumbersFits(List<SudokuField> fields)
+        {
+            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            {
+                SudokuField.Certainty toSetTo = SudokuField.Certainty.CanNotBe;
+                if(Guess == true)
+                {
+                    toSetTo = SudokuField.Certainty.CanNotBeOnGuess;
+                }
+
+                List<int> numbersNeeded = new List<int>();
+                for(int i = boardPropperties[boardPropperty].MinNumber; i <= boardPropperties[boardPropperty].MaxNumber; i++)
+                {
+                    numbersNeeded.Add(i);
+                }
+                for (int i = 0; i < fields.Count; i++)
+                {
+                    int? number = fields[i].GetNumber();
+                    if (number != null)
+                    {
+                        numbersNeeded.Remove((int)number);
+                        fields.Remove(fields[i]);
+                        i--;
+                    }
+                }
+                foreach (SudokuField field in fields)
+                {
+                    List<int> numbersField = (List<int>)field.GetNumbers();
+                    numbersField.RemoveAll(number => !numbersNeeded.Contains(number));
+                    foreach (SudokuField fieldToCheckAgainst in fields)
+                    {
+                        if (field != fieldToCheckAgainst)
+                        {
+                            IEnumerable<int> numbersCoveredByOtherField = fieldToCheckAgainst.GetNumbers();
+                            numbersField.RemoveAll(number => numbersCoveredByOtherField.Contains(number));
+                            if (numbersField.Count() == 0)
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    if(numbersField.Count() >= 1)
+                    {
+                        List<int> numbersToExclude = (List<int>)field.GetNumbers();
+                        numbersToExclude.RemoveAll(number => numbersField.Contains(number));
+                        SudokuField.ChangeType newChange = field.SetNumbers(numbersToExclude, toSetTo);
+                        ChangeController(newChange);
+                    }
+                }
+            }
+        }
+        private bool NoNumberMoreThenOnce(List<int> numbers)
+        {
+            for (int indexOne = 0; indexOne < numbers.Count(); indexOne++)
+            {
+                for (int indexTwo = indexOne + 1; indexTwo < numbers.Count(); indexTwo++)
+                {
+                    if (numbers[indexOne] == numbers[indexTwo])
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        private void ChangeController(SudokuField.ChangeType change)
+        {
+            if(change == SudokuField.ChangeType.Excluding)
+            {
+                ChangedExcluding = true;
+            }
+            else if(change == SudokuField.ChangeType.FiguredOut)
+            {
+                Changed = true;
             }
         }
 
         private SudokuField[,] BoardWidthHeight()
         {
-            SudokuField[,]  board = new SudokuField[boardPropperties[boardPropperty].BoardWidth, boardPropperties[boardPropperty].BoardHeight];
+            SudokuField[,] board = new SudokuField[boardPropperties[boardPropperty].BoardWidth, boardPropperties[boardPropperty].BoardHeight];
             for (int x = 0; x < boardPropperties[boardPropperty].BoardWidth; x++)
             {
                 for (int y = 0; y < boardPropperties[boardPropperty].BoardHeight; y++)
@@ -265,7 +502,7 @@ namespace SudokuSolverStatic
             return field;
         }
 
-        
+
         internal class BoardProppertySet
         {
             public int BoardWidth { get; set; }
