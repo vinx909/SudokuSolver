@@ -40,7 +40,10 @@ namespace SudokuSolverStatic
 
         private readonly BoardPropperty boardPropperty;
         private SudokuField[,] board;
+
         private List<GuessDetails> guesses;
+        private Random randomForGuesses;
+        private bool guessesApplied;
 
         public bool Changed { get; set; }
         public bool ChangedExcluding { get; set; }
@@ -239,6 +242,8 @@ namespace SudokuSolverStatic
             if(guesses == null)
             {
                 guesses = new List<GuessDetails>();
+                randomForGuesses = new Random();
+                Guess = true;
             }
             bool goBackOneGuess = false;
             if(SimpleHorisontalTest() && SimpleVerticalTest() && SimpleSquareTest() && !Finished)
@@ -284,12 +289,17 @@ namespace SudokuSolverStatic
             {
                 guess.AddFailedGuess(guess.Guess);
             }
-            IEnumerable<int> guessOptions = guess.getGuessOptions(board[guess.X, guess.Y]);
+            List<int> guessOptions = guess.getGuessOptions(board[guess.X, guess.Y]);
             if(guessOptions.Count() == 0)
             {
                 return true;
             }
-            guess.Guess = guessOptions.FirstOrDefault();
+            guess.Guess = guessOptions[randomForGuesses.Next(guessOptions.Count())];
+            MakeGuessApplyAllGuesses();
+            if(SimpleTest() == false)
+            {
+                MakeGuessTryDifferentGuess();
+            }
             return false;
         }
         private void MakeGuessGoBackOneGuess()
@@ -308,22 +318,34 @@ namespace SudokuSolverStatic
         }
         private void MakeGuessRemoveGuessExclusionsAndSets()
         {
-            for (int x = 0; x < boardPropperties[boardPropperty].BoardWidth; x++)
+            if(guessesApplied == true)
             {
-                for (int y = 0; y < boardPropperties[boardPropperty].BoardHeight; y++)
+                guessesApplied = false;
+                for (int x = 0; x < boardPropperties[boardPropperty].BoardWidth; x++)
                 {
-                    board[x, y].RemoveGuesses();
+                    for (int y = 0; y < boardPropperties[boardPropperty].BoardHeight; y++)
+                    {
+                        board[x, y].RemoveGuesses();
+                    }
                 }
             }
         }
         private void MakeGuessApplyAllGuesses()
         {
-            foreach(GuessDetails guess in guesses)
+            if(guessesApplied == false)
             {
-                board[guess.X, guess.Y].SetNumber(guess.Guess, SudokuField.Certainty.Guess);
+                guessesApplied = true;
+                foreach(GuessDetails guess in guesses)
+                {
+                    board[guess.X, guess.Y].SetNumber(guess.Guess, SudokuField.Certainty.Guess);
+                }
             }
         }
 
+        public bool SimpleTest()
+        {
+            return SimpleHorisontalTest() && SimpleVerticalTest() && SimpleSquareTest();
+        }
         public bool SimpleHorisontalTest()
         {
             if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
@@ -639,7 +661,7 @@ namespace SudokuSolverStatic
             {
                 failedGuesses.Add(guess);
             }
-            internal IEnumerable<int> getGuessOptions(SudokuField field)
+            internal List<int> getGuessOptions(SudokuField field)
             {
                 List<int> options = (List<int>)field.GetNumbers();
                 options.RemoveAll(number => failedGuesses.Contains(number));

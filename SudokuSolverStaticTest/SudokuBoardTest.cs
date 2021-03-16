@@ -150,6 +150,65 @@ namespace SudokuSolverStaticTest
         }
 
         [TestMethod]
+        public void GuessMakeFirstGuessTest()
+        {
+            int[,] start =
+            {
+                {0,0 },
+                {0,0 }
+            };
+            int[,] endOne =
+            {
+                {1,0 },
+                {0,0 }
+            };
+            int[,] endTwo =
+            {
+                {2,0 },
+                {0,0 }
+            };
+            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardPropperty.TwoByTwo);
+
+            systemUnderTest.MakeGuess();
+            int[,] outcome = systemUnderTest.GetAsMultidimentionalArray();
+
+            Assert.IsTrue(EqualTwoDimentionalArray(outcome, endOne)||EqualTwoDimentionalArray(outcome, endTwo));
+        }
+        [TestMethod]
+        public void GuessMakeSecondGuessTest()
+        {
+            int[,] start =
+            {
+                {0,0,0,0 },
+                {0,0,0,0 },
+                {0,0,0,0 },
+                {0,0,0,0 }
+            };
+            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardPropperty.FourByFour);
+
+            systemUnderTest.MakeGuess();
+            systemUnderTest.MakeGuess();
+            int[,] outcome = systemUnderTest.GetAsMultidimentionalArray();
+
+            bool testSuccessful = false;
+            int[,] correctEnd = CreateCopyOfArray(start);
+            correctEnd[0,0] = outcome[0,0];
+            for(int i = 1; i <= 4; i++)
+            {
+                if(i != outcome[0, 0])
+                {
+                    correctEnd[0, 1] = i;
+                    testSuccessful = EqualTwoDimentionalArray(outcome, correctEnd);
+                    if(testSuccessful == true)
+                    {
+                        break;
+                    }
+                }
+            }
+            Assert.IsTrue(testSuccessful);
+        }
+
+        [TestMethod]
         public void SimpleHorizontalTestTestSuccess()
         {
             int[,] Input =
@@ -239,6 +298,18 @@ namespace SudokuSolverStaticTest
                 }
             }
             return true;
+        }
+        private int[,] CreateCopyOfArray(int[,] toCopy)
+        {
+            int[,] copy = new int[toCopy.GetLength(0), toCopy.GetLength(1)];
+            for(int x = 0; x < copy.GetLength(0); x++)
+            {
+                for (int y = 0; y < copy.GetLength(1); y++)
+                {
+                    copy[x,y] = toCopy[x,y];
+                }
+            }
+            return copy;
         }
     }
 }
