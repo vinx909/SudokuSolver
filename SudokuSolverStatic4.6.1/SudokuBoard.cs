@@ -106,22 +106,15 @@ namespace SudokuSolverStatic
         {
             if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
             {
-                List<int> numbers = new List<int>();
                 List<SudokuField> fields = new List<SudokuField>();
                 for (int y = 0; y < boardPropperties[boardPropperty].BoardHeight; y++)
                 {
-                    numbers.Clear();
                     fields.Clear();
                     for (int x = 0; x < boardPropperties[boardPropperty].BoardWidth; x++)
                     {
-                        int? number = board[x, y].GetNumber();
-                        if (number != null)
-                        {
-                            numbers.Add((int)number);
-                        }
                         fields.Add(board[x, y]);
                     }
-                    ExcludeNumbersFromFields(numbers, fields);
+                    SimpeEcludeNumbersFilledInInOtherFields(fields);
                 }
             }
         }
@@ -129,22 +122,15 @@ namespace SudokuSolverStatic
         {
             if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
             {
-                List<int> numbers = new List<int>();
                 List<SudokuField> fields = new List<SudokuField>();
                 for (int x = 0; x < boardPropperties[boardPropperty].BoardHeight; x++)
                 {
-                    numbers.Clear();
                     fields.Clear();
                     for (int y = 0; y < boardPropperties[boardPropperty].BoardWidth; y++)
                     {
-                        int? number = board[x, y].GetNumber();
-                        if (number != null)
-                        {
-                            numbers.Add((int)number);
-                        }
                         fields.Add(board[x, y]);
                     }
-                    ExcludeNumbersFromFields(numbers, fields);
+                    SimpeEcludeNumbersFilledInInOtherFields(fields);
                 }
             }
         }
@@ -152,13 +138,11 @@ namespace SudokuSolverStatic
         {
             if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
             {
-                List<int> numbers = new List<int>();
                 List<SudokuField> fields = new List<SudokuField>();
                 for (int xSquare = 0; xSquare < boardPropperties[boardPropperty].NumberOfHorizontalSquares; xSquare++)
                 {
                     for (int ySquare = 0; ySquare < boardPropperties[boardPropperty].NumberOfVerticalSquares; ySquare++)
                     {
-                        numbers.Clear();
                         fields.Clear();
                         for (int xInternal = 0; xInternal < boardPropperties[boardPropperty].SquareWidth; xInternal++)
                         {
@@ -166,15 +150,10 @@ namespace SudokuSolverStatic
                             {
                                 int x = xSquare * boardPropperties[boardPropperty].SquareWidth + xInternal;
                                 int y = ySquare * boardPropperties[boardPropperty].SquareHeight + yInternal;
-                                int? number = board[x, y].GetNumber();
-                                if (number != null)
-                                {
-                                    numbers.Add((int)number);
-                                }
                                 fields.Add(board[x, y]);
                             }
                         }
-                        ExcludeNumbersFromFields(numbers, fields);
+                        SimpeEcludeNumbersFilledInInOtherFields(fields);
                     }
                 }
             }
@@ -433,8 +412,7 @@ namespace SudokuSolverStatic
             return true;
         }
 
-
-        private void ExcludeNumbersFromFields(IEnumerable<int> numbers, IEnumerable<SudokuField> fields)
+        private void SimpeEcludeNumbersFilledInInOtherFields(IEnumerable<SudokuField> fields)
         {
             SudokuField.Certainty toSetTo = SudokuField.Certainty.CanNotBe;
             if (Guess == true)
@@ -442,9 +420,19 @@ namespace SudokuSolverStatic
                 toSetTo = SudokuField.Certainty.CanNotBeOnGuess;
             }
 
+            List<int> filledInNumbers = new List<int>();
+            foreach(SudokuField field in fields)
+            {
+                int? number = field.GetNumber();
+                if(number != null)
+                {
+                    filledInNumbers.Add((int)number);
+                }
+            }
+
             foreach (SudokuField field in fields)
             {
-                SudokuField.ChangeType newChange = field.SetNumbers(numbers, toSetTo);
+                SudokuField.ChangeType newChange = field.SetNumbers(filledInNumbers, toSetTo);
                 ChangeController(newChange);
             }
         }
@@ -597,16 +585,10 @@ namespace SudokuSolverStatic
         }
         public int[][] GetAsJaggedArray()
         {
-            int[][] field = new int[9][];
-            for(int i = 0; i < 9; i++)
-            {
-                field[i] = new int[9];
-            }
-
-            //int[][] field = new int[board.GetLength(0)][];
+            int[][] field = new int[board.GetLength(0)][];
             for (int x = 0; x < board.GetLength(0); x++)
             {
-                //field[x] = new int[board.GetLength(1)];
+                field[x] = new int[board.GetLength(1)];
                 for (int y = 0; y < board.GetLength(1); y++)
                 {
                     int? number = board[x, y].GetNumber();
