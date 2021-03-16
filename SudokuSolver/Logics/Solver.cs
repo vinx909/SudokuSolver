@@ -17,7 +17,7 @@ namespace SudokuSolver.Logics
 
         public int[][] Create(int[][] sudoku)
         {
-            int[][] created = SudokuSolverStatic.SudokuSolver.Create();
+            int[][] created = SudokuSolverStatic.SudokuSolver.Create(sudoku);
             return created;
         }
     }

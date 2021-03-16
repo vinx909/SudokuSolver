@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SudokuSolverStatic
 {
-    internal class SudokuField
+    public class SudokuField
     {
         internal enum Certainty
         {
@@ -17,6 +17,12 @@ namespace SudokuSolverStatic
             CanBe,
             CanNotBe,
             CanNotBeOnGuess
+        }
+        internal enum ChangeType
+        {
+            None,
+            Excluding,
+            FiguredOut
         }
 
         private const Certainty defaultCertaintySetNumber = Certainty.FiguredOut;
@@ -66,7 +72,7 @@ namespace SudokuSolverStatic
         {
             foreach (Option option in Options)
             {
-                if(option.Certainty == Certainty.Set)
+                if (option.Certainty == Certainty.Set)
                 {
                     return option.Number;
                 }
@@ -90,13 +96,33 @@ namespace SudokuSolverStatic
             return numbers;
         }
 
-        internal bool SetNumber(int number, Certainty certainty = defaultCertaintySetNumber, bool test = true)
+        internal ChangeType SetNumber(int number, Certainty certainty = defaultCertaintySetNumber, bool test = true)
         {
+            ChangeType returnValue = ChangeType.None;
             foreach (Option option in Options)
             {
                 if (option.Number == number)
                 {
-                    if(certainty == Certainty.CanNotBeOnGuess)
+                    if(option.Certainty == certainty)
+                    {
+                        return ChangeType.None;
+                    }
+                    else if (CertaintyIsOfSingleInstance(certainty))
+                    {
+                        returnValue = ChangeType.FiguredOut;
+                    }
+                    else
+                    {
+                        returnValue = ChangeType.Excluding;
+                    }
+                    if (certainty == Certainty.CanNotBe)
+                    {
+                        if (option.Certainty == Certainty.CanBe || option.Certainty == Certainty.CanNotBeOnGuess)
+                        {
+                            option.Certainty = certainty;
+                        }
+                    }
+                    else if (certainty == Certainty.CanNotBeOnGuess)
                     {
                         if (option.Certainty == Certainty.CanBe)
                         {
@@ -104,7 +130,7 @@ namespace SudokuSolverStatic
                         }
                     }
                     else
-                    {                        
+                    {
                         option.Certainty = certainty;
                     }
                 }
@@ -119,15 +145,17 @@ namespace SudokuSolverStatic
             }
             if (test == true || CertaintyIsOfSingleInstance(certainty))
             {
-                return TryFigureOut();
+                bool figuredOut = TryFigureOut();
+                if(figuredOut == true)
+                {
+                    return ChangeType.FiguredOut;
+                }
             }
-            else
-            {
-                return false;
-            }
+            return returnValue;
         }
-        internal bool SetNumbers(IEnumerable<int> numbers, Certainty certainty = defaultCertaintySetNumbers)
+        internal ChangeType SetNumbers(IEnumerable<int> numbers, Certainty certainty = defaultCertaintySetNumbers)
         {
+            ChangeType returnValue = ChangeType.None;
             if (numbers.Count() > 1)
             {
                 if (CertaintyIsOfSingleInstance(certainty))
@@ -137,9 +165,21 @@ namespace SudokuSolverStatic
             }
             foreach (int number in numbers)
             {
-                SetNumber(number, certainty, false);
+                ChangeType newChange = SetNumber(number, certainty, false);
+                if(newChange != ChangeType.None)
+                {
+                    if(newChange != returnValue)
+                    {
+                        returnValue = newChange;
+                    }
+                }
             }
-            return TryFigureOut();
+            bool figuredOut = TryFigureOut();
+            if (figuredOut == true)
+            {
+                return ChangeType.FiguredOut;
+            }
+            return returnValue;
         }
 
         internal void RemoveGuesses()
@@ -154,9 +194,9 @@ namespace SudokuSolverStatic
         }
         internal void RemoveAllBut(Certainty certainty = Certainty.Set)
         {
-            foreach(Option option in Options)
+            foreach (Option option in Options)
             {
-                if(option.Certainty != certainty)
+                if (option.Certainty != certainty)
                 {
                     option.Certainty = Certainty.CanBe;
                 }
@@ -214,7 +254,7 @@ namespace SudokuSolverStatic
                 return false;
             }
         }
-        
+
         private class Option
         {
             public int Number { get; set; }
