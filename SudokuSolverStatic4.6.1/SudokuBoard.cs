@@ -8,7 +8,7 @@ namespace SudokuSolverStatic
 {
     public class SudokuBoard
     {
-        public enum BoardPropperty
+        public enum BoardProperty
         {
             NineByNine,
             SixBySix,
@@ -18,27 +18,27 @@ namespace SudokuSolverStatic
 
         private const string exceptionNoEmptySpotToGuessFor = "trying to fill an empty stop when no empty spot can be found";
         private const string exceptionNoGuessToGuessIn = "trying to make a different guess when there is no guess";
-        private static Dictionary<BoardPropperty, BoardProppertySet> boardPropperties = new Dictionary<BoardPropperty, BoardProppertySet>
+        private static Dictionary<BoardProperty, BoardPropertySet> boardProperties = new Dictionary<BoardProperty, BoardPropertySet>
         {
-            { BoardPropperty.NineByNine, new BoardProppertySet { BoardWidth = 9, BoardHeight = 9, SquareWidth = 3, SquareHeight = 3, MinNumber = 1, MaxNumber = 9 } },
-            { BoardPropperty.SixBySix, new BoardProppertySet { BoardWidth = 6, BoardHeight = 6, SquareWidth = 3, SquareHeight = 2, MinNumber = 1, MaxNumber = 6 } },
-            { BoardPropperty.FourByFour, new BoardProppertySet { BoardWidth = 4, BoardHeight = 4, SquareWidth = 2, SquareHeight = 2, MinNumber = 1, MaxNumber = 4 } },
-            { BoardPropperty.TwoByTwo, new BoardProppertySet { BoardWidth = 2, BoardHeight = 2, SquareWidth = 2, SquareHeight = 1, MinNumber = 1, MaxNumber = 2 } }
+            { BoardProperty.NineByNine, new BoardPropertySet { BoardWidth = 9, BoardHeight = 9, SquareWidth = 3, SquareHeight = 3, MinNumber = 1, MaxNumber = 9 } },
+            { BoardProperty.SixBySix, new BoardPropertySet { BoardWidth = 6, BoardHeight = 6, SquareWidth = 3, SquareHeight = 2, MinNumber = 1, MaxNumber = 6 } },
+            { BoardProperty.FourByFour, new BoardPropertySet { BoardWidth = 4, BoardHeight = 4, SquareWidth = 2, SquareHeight = 2, MinNumber = 1, MaxNumber = 4 } },
+            { BoardProperty.TwoByTwo, new BoardPropertySet { BoardWidth = 2, BoardHeight = 2, SquareWidth = 2, SquareHeight = 1, MinNumber = 1, MaxNumber = 2 } }
         };
 
-        private readonly Func<int, int, SudokuField> defaultCreatereateSudokuField = (int width, int height) =>
+        private readonly Func<int, int, SudokuField> defaultCreateSudokuField = (int width, int height) =>
         {
             return new SudokuField(width, height);
         };
-        private readonly Func<int, int, int, SudokuField> defaultCreatereateSudokuFieldWithSetNumber = (int width, int height, int setNumber) =>
+        private readonly Func<int, int, int, SudokuField> defaultCreateSudokuFieldWithSetNumber = (int width, int height, int setNumber) =>
         {
             return new SudokuField(width, height, setNumber);
         };
 
-        private Func<int, int, SudokuField> createreateSudokuField;
-        private Func<int, int, int, SudokuField> createreateSudokuFieldWithSetNumber;
+        private Func<int, int, SudokuField> createSudokuField;
+        private Func<int, int, int, SudokuField> createSudokuFieldWithSetNumber;
 
-        private readonly BoardPropperty boardPropperty;
+        private readonly BoardProperty boardProperty;
         private SudokuField[,] board;
 
         private List<GuessDetails> guesses;
@@ -64,19 +64,19 @@ namespace SudokuSolverStatic
         }
 
 
-        public SudokuBoard(int[,] board, BoardPropperty boardPropperty = BoardPropperty.NineByNine) : this(boardPropperty)
+        public SudokuBoard(int[,] board, BoardProperty boardProperty = BoardProperty.NineByNine) : this(boardProperty)
         {
             SetField(board);
         }
-        public SudokuBoard(int[][] board, BoardPropperty boardPropperty = BoardPropperty.NineByNine) : this(boardPropperty)
+        public SudokuBoard(int[][] board, BoardProperty boardProperty = BoardProperty.NineByNine) : this(boardProperty)
         {
             SetField(board);
         }
-        public SudokuBoard(BoardPropperty boardPropperty = BoardPropperty.NineByNine)
+        public SudokuBoard(BoardProperty boardProperty = BoardProperty.NineByNine)
         {
-            this.boardPropperty = boardPropperty;
-            createreateSudokuField = defaultCreatereateSudokuField;
-            createreateSudokuFieldWithSetNumber = defaultCreatereateSudokuFieldWithSetNumber;
+            this.boardProperty = boardProperty;
+            createSudokuField = defaultCreateSudokuField;
+            createSudokuFieldWithSetNumber = defaultCreateSudokuFieldWithSetNumber;
             Changed = false;
             Guess = false;
         }
@@ -94,66 +94,64 @@ namespace SudokuSolverStatic
             this.board = BoardIntToField(board);
         }
 
-
         public void SetCreateFieldFunctions(Func<int, int, SudokuField> create, Func<int, int, int, SudokuField> createWithSetNumber)
         {
-            createreateSudokuField = create;
-            createreateSudokuFieldWithSetNumber = createWithSetNumber;
+            createSudokuField = create;
+            createSudokuFieldWithSetNumber = createWithSetNumber;
         }
-
 
         public void SimpleHorisontalExclusion()
         {
-            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
             {
                 List<SudokuField> fields = new List<SudokuField>();
-                for (int y = 0; y < boardPropperties[boardPropperty].BoardHeight; y++)
+                for (int y = 0; y < boardProperties[boardProperty].BoardHeight; y++)
                 {
                     fields.Clear();
-                    for (int x = 0; x < boardPropperties[boardPropperty].BoardWidth; x++)
+                    for (int x = 0; x < boardProperties[boardProperty].BoardWidth; x++)
                     {
                         fields.Add(board[x, y]);
                     }
-                    SimpeEcludeNumbersFilledInInOtherFields(fields);
+                    SimpleExclusion(fields);
                 }
             }
         }
         public void SimpleVerticalExclusion()
         {
-            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
             {
                 List<SudokuField> fields = new List<SudokuField>();
-                for (int x = 0; x < boardPropperties[boardPropperty].BoardHeight; x++)
+                for (int x = 0; x < boardProperties[boardProperty].BoardHeight; x++)
                 {
                     fields.Clear();
-                    for (int y = 0; y < boardPropperties[boardPropperty].BoardWidth; y++)
+                    for (int y = 0; y < boardProperties[boardProperty].BoardWidth; y++)
                     {
                         fields.Add(board[x, y]);
                     }
-                    SimpeEcludeNumbersFilledInInOtherFields(fields);
+                    SimpleExclusion(fields);
                 }
             }
         }
         public void SimpleSquareExclusion()
         {
-            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
             {
                 List<SudokuField> fields = new List<SudokuField>();
-                for (int xSquare = 0; xSquare < boardPropperties[boardPropperty].NumberOfHorizontalSquares; xSquare++)
+                for (int xSquare = 0; xSquare < boardProperties[boardProperty].NumberOfHorizontalSquares; xSquare++)
                 {
-                    for (int ySquare = 0; ySquare < boardPropperties[boardPropperty].NumberOfVerticalSquares; ySquare++)
+                    for (int ySquare = 0; ySquare < boardProperties[boardProperty].NumberOfVerticalSquares; ySquare++)
                     {
                         fields.Clear();
-                        for (int xInternal = 0; xInternal < boardPropperties[boardPropperty].SquareWidth; xInternal++)
+                        for (int xInternal = 0; xInternal < boardProperties[boardProperty].SquareWidth; xInternal++)
                         {
-                            for (int yInternal = 0; yInternal < boardPropperties[boardPropperty].SquareHeight; yInternal++)
+                            for (int yInternal = 0; yInternal < boardProperties[boardProperty].SquareHeight; yInternal++)
                             {
-                                int x = xSquare * boardPropperties[boardPropperty].SquareWidth + xInternal;
-                                int y = ySquare * boardPropperties[boardPropperty].SquareHeight + yInternal;
+                                int x = xSquare * boardProperties[boardProperty].SquareWidth + xInternal;
+                                int y = ySquare * boardProperties[boardProperty].SquareHeight + yInternal;
                                 fields.Add(board[x, y]);
                             }
                         }
-                        SimpeEcludeNumbersFilledInInOtherFields(fields);
+                        SimpleExclusion(fields);
                     }
                 }
             }
@@ -161,7 +159,7 @@ namespace SudokuSolverStatic
 
         public void HorizontalExclusionOnOnlyPositionsThatFit()
         {
-            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
             {
                 List<SudokuField> fields = new List<SudokuField>();
                 for(int y = 0; y < board.GetLength(1); y++)
@@ -171,13 +169,13 @@ namespace SudokuSolverStatic
                     {
                         fields.Add(board[x, y]);
                     }
-                    FindWhichOfNumbersItMustBeByOnlyFieldWhereNumbersFits(fields);
+                    ExclusionOnOnlyPositionsThatFit(fields);
                 }
             }
         }
         public void VerticalExclusionOnOnlyPositionsThatFit()
         {
-            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
             {
                 List<SudokuField> fields = new List<SudokuField>();
                 for (int x = 0; x < board.GetLength(0); x++)
@@ -187,30 +185,30 @@ namespace SudokuSolverStatic
                     {
                         fields.Add(board[x, y]);
                     }
-                    FindWhichOfNumbersItMustBeByOnlyFieldWhereNumbersFits(fields);
+                    ExclusionOnOnlyPositionsThatFit(fields);
                 }
             }
         }
         public void SquareExclusionOnOnlyPositionsThatFit()
         {
-            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
             {
                 List<SudokuField> fields = new List<SudokuField>();
-                for(int xSquare = 0; xSquare < boardPropperties[boardPropperty].NumberOfHorizontalSquares; xSquare++)
+                for(int xSquare = 0; xSquare < boardProperties[boardProperty].NumberOfHorizontalSquares; xSquare++)
                 {
-                    for (int ySquare = 0; ySquare < boardPropperties[boardPropperty].NumberOfVerticalSquares; ySquare++)
+                    for (int ySquare = 0; ySquare < boardProperties[boardProperty].NumberOfVerticalSquares; ySquare++)
                     {
                         fields.Clear();
-                        for(int xInSquare = 0; xInSquare < boardPropperties[boardPropperty].SquareWidth; xInSquare++)
+                        for(int xInSquare = 0; xInSquare < boardProperties[boardProperty].SquareWidth; xInSquare++)
                         {
-                            for(int yInSquare = 0; yInSquare < boardPropperties[boardPropperty].SquareHeight; yInSquare++)
+                            for(int yInSquare = 0; yInSquare < boardProperties[boardProperty].SquareHeight; yInSquare++)
                             {
-                                int x = xSquare * boardPropperties[boardPropperty].SquareWidth + xInSquare;
-                                int y = ySquare * boardPropperties[boardPropperty].SquareHeight + yInSquare;
+                                int x = xSquare * boardProperties[boardProperty].SquareWidth + xInSquare;
+                                int y = ySquare * boardProperties[boardProperty].SquareHeight + yInSquare;
                                 fields.Add(board[x, y]);
                             }
                         }
-                        FindWhichOfNumbersItMustBeByOnlyFieldWhereNumbersFits(fields);
+                        ExclusionOnOnlyPositionsThatFit(fields);
                     }
                 }
             }
@@ -225,11 +223,11 @@ namespace SudokuSolverStatic
                 Guess = true;
             }
             bool goBackOneGuess = false;
-            if(SimpleHorisontalTest() && SimpleVerticalTest() && SimpleSquareTest() && !Finished)
+            if(SimpleTest() && !Finished)
             {
                 goBackOneGuess = MakeGuessFillEmpty();
             }
-            else
+            if(SimpleTest() == false)
             {
                 goBackOneGuess = MakeGuessTryDifferentGuess();
             }
@@ -242,9 +240,9 @@ namespace SudokuSolverStatic
         } 
         private bool MakeGuessFillEmpty()
         {
-            for (int x = 0; x < boardPropperties[boardPropperty].BoardWidth; x++)
+            for (int x = 0; x < boardProperties[boardProperty].BoardWidth; x++)
             {
-                for (int y = 0; y < boardPropperties[boardPropperty].BoardHeight; y++)
+                for (int y = 0; y < boardProperties[boardProperty].BoardHeight; y++)
                 {
                     if (board[x,y].GetNumber() == null)
                     {
@@ -300,9 +298,9 @@ namespace SudokuSolverStatic
             if(guessesApplied == true)
             {
                 guessesApplied = false;
-                for (int x = 0; x < boardPropperties[boardPropperty].BoardWidth; x++)
+                for (int x = 0; x < boardProperties[boardProperty].BoardWidth; x++)
                 {
-                    for (int y = 0; y < boardPropperties[boardPropperty].BoardHeight; y++)
+                    for (int y = 0; y < boardProperties[boardProperty].BoardHeight; y++)
                     {
                         board[x, y].RemoveGuesses();
                     }
@@ -327,13 +325,13 @@ namespace SudokuSolverStatic
         }
         public bool SimpleHorisontalTest()
         {
-            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
             {
                 List<int> numbers = new List<int>();
-                for (int y = 0; y < boardPropperties[boardPropperty].BoardHeight; y++)
+                for (int y = 0; y < boardProperties[boardProperty].BoardHeight; y++)
                 {
                     numbers.Clear();
-                    for (int x = 0; x < boardPropperties[boardPropperty].BoardWidth; x++)
+                    for (int x = 0; x < boardProperties[boardProperty].BoardWidth; x++)
                     {
                         int? number = board[x, y].GetNumber();
                         if (number != null)
@@ -352,13 +350,13 @@ namespace SudokuSolverStatic
         }
         public bool SimpleVerticalTest()
         {
-            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
             {
                 List<int> numbers = new List<int>();
-                for (int x = 0; x < boardPropperties[boardPropperty].BoardHeight; x++)
+                for (int x = 0; x < boardProperties[boardProperty].BoardHeight; x++)
                 {
                     numbers.Clear();
-                    for (int y = 0; y < boardPropperties[boardPropperty].BoardWidth; y++)
+                    for (int y = 0; y < boardProperties[boardProperty].BoardWidth; y++)
                     {
                         int? number = board[x, y].GetNumber();
                         if (number != null)
@@ -377,22 +375,22 @@ namespace SudokuSolverStatic
         }
         public bool SimpleSquareTest()
         {
-            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
             {
                 List<int> numbers = new List<int>();
                 List<SudokuField> fields = new List<SudokuField>();
-                for (int xSquare = 0; xSquare < boardPropperties[boardPropperty].NumberOfHorizontalSquares; xSquare++)
+                for (int xSquare = 0; xSquare < boardProperties[boardProperty].NumberOfHorizontalSquares; xSquare++)
                 {
-                    for (int ySquare = 0; ySquare < boardPropperties[boardPropperty].NumberOfVerticalSquares; ySquare++)
+                    for (int ySquare = 0; ySquare < boardProperties[boardProperty].NumberOfVerticalSquares; ySquare++)
                     {
                         numbers.Clear();
                         fields.Clear();
-                        for (int xInternal = 0; xInternal < boardPropperties[boardPropperty].SquareWidth; xInternal++)
+                        for (int xInternal = 0; xInternal < boardProperties[boardProperty].SquareWidth; xInternal++)
                         {
-                            for (int yInternal = 0; yInternal < boardPropperties[boardPropperty].SquareHeight; yInternal++)
+                            for (int yInternal = 0; yInternal < boardProperties[boardProperty].SquareHeight; yInternal++)
                             {
-                                int x = xSquare * boardPropperties[boardPropperty].SquareWidth + xInternal;
-                                int y = ySquare * boardPropperties[boardPropperty].SquareHeight + yInternal;
+                                int x = xSquare * boardProperties[boardProperty].SquareWidth + xInternal;
+                                int y = ySquare * boardProperties[boardProperty].SquareHeight + yInternal;
                                 int? number = board[x, y].GetNumber();
                                 if (number != null)
                                 {
@@ -412,7 +410,7 @@ namespace SudokuSolverStatic
             return true;
         }
 
-        private void SimpeEcludeNumbersFilledInInOtherFields(IEnumerable<SudokuField> fields)
+        private void SimpleExclusion(IEnumerable<SudokuField> fields)
         {
             SudokuField.Certainty toSetTo = SudokuField.Certainty.CanNotBe;
             if (Guess == true)
@@ -436,9 +434,9 @@ namespace SudokuSolverStatic
                 ChangeController(newChange);
             }
         }
-        private void FindWhichOfNumbersItMustBeByOnlyFieldWhereNumbersFits(List<SudokuField> fields)
+        private void ExclusionOnOnlyPositionsThatFit(List<SudokuField> fields)
         {
-            if (boardPropperty == BoardPropperty.NineByNine || boardPropperty == BoardPropperty.SixBySix || boardPropperty == BoardPropperty.FourByFour || boardPropperty == BoardPropperty.TwoByTwo)
+            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
             {
                 SudokuField.Certainty toSetTo = SudokuField.Certainty.CanNotBe;
                 if(Guess == true)
@@ -447,7 +445,7 @@ namespace SudokuSolverStatic
                 }
 
                 List<int> numbersNeeded = new List<int>();
-                for(int i = boardPropperties[boardPropperty].MinNumber; i <= boardPropperties[boardPropperty].MaxNumber; i++)
+                for(int i = boardProperties[boardProperty].MinNumber; i <= boardProperties[boardProperty].MaxNumber; i++)
                 {
                     numbersNeeded.Add(i);
                 }
@@ -515,30 +513,30 @@ namespace SudokuSolverStatic
 
         private SudokuField[,] BoardWidthHeight()
         {
-            SudokuField[,] board = new SudokuField[boardPropperties[boardPropperty].BoardWidth, boardPropperties[boardPropperty].BoardHeight];
-            for (int x = 0; x < boardPropperties[boardPropperty].BoardWidth; x++)
+            SudokuField[,] board = new SudokuField[boardProperties[boardProperty].BoardWidth, boardProperties[boardProperty].BoardHeight];
+            for (int x = 0; x < boardProperties[boardProperty].BoardWidth; x++)
             {
-                for (int y = 0; y < boardPropperties[boardPropperty].BoardHeight; y++)
+                for (int y = 0; y < boardProperties[boardProperty].BoardHeight; y++)
                 {
-                    board[x, y] = createreateSudokuField(boardPropperties[boardPropperty].MinNumber, boardPropperties[boardPropperty].MaxNumber);
+                    board[x, y] = createSudokuField(boardProperties[boardProperty].MinNumber, boardProperties[boardProperty].MaxNumber);
                 }
             }
             return board;
         }
         private SudokuField[,] BoardIntToField(int[,] field)
         {
-            SudokuField[,] board = new SudokuField[boardPropperties[boardPropperty].BoardWidth, boardPropperties[boardPropperty].BoardHeight];
+            SudokuField[,] board = new SudokuField[boardProperties[boardProperty].BoardWidth, boardProperties[boardProperty].BoardHeight];
             for (int x = 0; x < field.GetLength(0); x++)
             {
                 for (int y = 0; y < field.GetLength(1); y++)
                 {
                     if (field[x, y] == 0)
                     {
-                        board[x, y] = createreateSudokuField(boardPropperties[boardPropperty].MinNumber, boardPropperties[boardPropperty].MaxNumber);
+                        board[x, y] = createSudokuField(boardProperties[boardProperty].MinNumber, boardProperties[boardProperty].MaxNumber);
                     }
                     else
                     {
-                        board[x, y] = createreateSudokuFieldWithSetNumber(boardPropperties[boardPropperty].MinNumber, boardPropperties[boardPropperty].MaxNumber, field[x, y]);
+                        board[x, y] = createSudokuFieldWithSetNumber(boardProperties[boardProperty].MinNumber, boardProperties[boardProperty].MaxNumber, field[x, y]);
                     }
                 }
             }
@@ -546,18 +544,18 @@ namespace SudokuSolverStatic
         }
         private SudokuField[,] BoardIntToField(int[][] field)
         {
-            SudokuField[,] board = new SudokuField[boardPropperties[boardPropperty].BoardWidth, boardPropperties[boardPropperty].BoardHeight];
+            SudokuField[,] board = new SudokuField[boardProperties[boardProperty].BoardWidth, boardProperties[boardProperty].BoardHeight];
             for (int x = 0; x < field.Length; x++)
             {
                 for (int y = 0; y < field[0].Length; y++)
                 {
                     if (field[x][y] == 0)
                     {
-                        board[x, y] = createreateSudokuField(boardPropperties[boardPropperty].MinNumber, boardPropperties[boardPropperty].MaxNumber);
+                        board[x, y] = createSudokuField(boardProperties[boardProperty].MinNumber, boardProperties[boardProperty].MaxNumber);
                     }
                     else
                     {
-                        board[x, y] = createreateSudokuFieldWithSetNumber(boardPropperties[boardPropperty].MinNumber, boardPropperties[boardPropperty].MaxNumber, field[x][y]);
+                        board[x, y] = createSudokuFieldWithSetNumber(boardProperties[boardProperty].MinNumber, boardProperties[boardProperty].MaxNumber, field[x][y]);
                     }
                 }
             }
@@ -606,7 +604,7 @@ namespace SudokuSolverStatic
         }
 
 
-        internal class BoardProppertySet
+        internal class BoardPropertySet
         {
             public int BoardWidth { get; set; }
             public int BoardHeight { get; set; }
