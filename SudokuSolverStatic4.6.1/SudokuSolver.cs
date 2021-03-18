@@ -27,20 +27,23 @@ namespace SudokuSolverStatic
         private static SudokuBoard Solve(SudokuBoard board, bool willGuess = true)
         {
             int solveState = 1;
-            int highestSolveState = 0;
-            int numberOfLoops = 0;
 
             while (true)
             {
                 switch (solveState)
                 {
                     case 0:
-                        numberOfLoops++;
                         if (board.Changed == true)
                         {
-                            highestSolveState = Math.Max(solveState, highestSolveState);
                             if (board.Finished == true)
                             {
+                                if (board.Guess == true)
+                                {
+                                    if (board.SimpleTest() == false)
+                                    {
+                                        goto case 7;
+                                    }
+                                }
                                 return board;
                             }
                             board.Changed = false;
@@ -129,11 +132,11 @@ namespace SudokuSolverStatic
         {
             return Create();
         }
-        public static int[,] Create(SudokuBoard.BoardPropperty boardPropperty = SudokuBoard.BoardPropperty.NineByNine)
+        public static int[,] Create(SudokuBoard.BoardProperty boardProperty = SudokuBoard.BoardProperty.NineByNine)
         {
             Random random = new Random();
 
-            SudokuBoard solution = new SudokuBoard(boardPropperty);
+            SudokuBoard solution = new SudokuBoard(boardProperty);
             solution.SetField();
             solution = Solve(solution);
 

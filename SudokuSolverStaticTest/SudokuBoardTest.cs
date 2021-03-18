@@ -9,8 +9,6 @@ namespace SudokuSolverStaticTest
     {
         SudokuBoard systemUnderTest;
 
-        //in arrays the first number is the x value and the second is the y. because of this how they appear here they look over the y = -x line flipped.
-        
         [TestMethod]
         public void SimpleHorizontalExclusionTest()
         {
@@ -24,7 +22,7 @@ namespace SudokuSolverStaticTest
                 {1,0 },
                 {2,0 }
             };
-            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardPropperty.TwoByTwo);
+            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardProperty.TwoByTwo);
 
             systemUnderTest.SimpleHorisontalExclusion();
             int[,] outcome = systemUnderTest.GetAsMultidimentionalArray();
@@ -44,7 +42,7 @@ namespace SudokuSolverStaticTest
                 {1,2 },
                 {0,0 }
             };
-            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardPropperty.TwoByTwo);
+            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardProperty.TwoByTwo);
 
             systemUnderTest.SimpleVerticalExclusion();
             int[,] outcome = systemUnderTest.GetAsMultidimentionalArray();
@@ -64,7 +62,7 @@ namespace SudokuSolverStaticTest
                 {1,0 },
                 {2,0 }
             };
-            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardPropperty.TwoByTwo);
+            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardProperty.TwoByTwo);
 
             systemUnderTest.SimpleSquareExclusion();
             int[,] outcome = systemUnderTest.GetAsMultidimentionalArray();
@@ -89,7 +87,7 @@ namespace SudokuSolverStaticTest
                 {3,0,0,0},
                 {4,0,0,0}
             };
-            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardPropperty.FourByFour);
+            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardProperty.FourByFour);
 
             systemUnderTest.SimpleSquareExclusion();
             systemUnderTest.HorizontalExclusionOnOnlyPositionsThatFit();
@@ -114,7 +112,7 @@ namespace SudokuSolverStaticTest
                 {0,0,0,0},
                 {0,0,0,0}
             };
-            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardPropperty.FourByFour);
+            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardProperty.FourByFour);
 
             systemUnderTest.SimpleSquareExclusion();
             systemUnderTest.VerticalExclusionOnOnlyPositionsThatFit();
@@ -139,7 +137,7 @@ namespace SudokuSolverStaticTest
                 {1,0,0,0},
                 {0,0,0,1}
             };
-            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardPropperty.FourByFour);
+            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardProperty.FourByFour);
 
             systemUnderTest.SimpleHorisontalExclusion();
             systemUnderTest.SimpleVerticalExclusion();
@@ -167,12 +165,12 @@ namespace SudokuSolverStaticTest
                 {2,0 },
                 {0,0 }
             };
-            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardPropperty.TwoByTwo);
+            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardProperty.TwoByTwo);
 
             systemUnderTest.MakeGuess();
             int[,] outcome = systemUnderTest.GetAsMultidimentionalArray();
 
-            Assert.IsTrue(EqualTwoDimentionalArray(outcome, endOne)||EqualTwoDimentionalArray(outcome, endTwo));
+            Assert.IsTrue(EqualTwoDimentionalArray(outcome, endOne) || EqualTwoDimentionalArray(outcome, endTwo));
         }
         [TestMethod]
         public void GuessMakeSecondGuessTest()
@@ -184,7 +182,7 @@ namespace SudokuSolverStaticTest
                 {0,0,0,0 },
                 {0,0,0,0 }
             };
-            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardPropperty.FourByFour);
+            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardProperty.FourByFour);
 
             systemUnderTest.MakeGuess();
             systemUnderTest.MakeGuess();
@@ -192,20 +190,213 @@ namespace SudokuSolverStaticTest
 
             bool testSuccessful = false;
             int[,] correctEnd = CreateCopyOfArray(start);
-            correctEnd[0,0] = outcome[0,0];
-            for(int i = 1; i <= 4; i++)
+            correctEnd[0, 0] = outcome[0, 0];
+            for (int i = 1; i <= 4; i++)
             {
-                if(i != outcome[0, 0])
+                if (i != outcome[0, 0])
                 {
                     correctEnd[0, 1] = i;
                     testSuccessful = EqualTwoDimentionalArray(outcome, correctEnd);
-                    if(testSuccessful == true)
+                    if (testSuccessful == true)
                     {
                         break;
                     }
                 }
             }
             Assert.IsTrue(testSuccessful);
+        }
+
+        [TestMethod]
+        public void BinarySolveHorizontalTestOne()
+        {
+            int[,] start =
+            {
+                {1,1,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 }
+            };
+            int[,] end =
+            {
+                {1,1,2,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 }
+            };
+            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardProperty.BinaryEightByEight);
+
+            systemUnderTest.BinarySolve();
+            int[,] outcome = systemUnderTest.GetAsMultidimentionalArray();
+
+            Assert.IsTrue(EqualTwoDimentionalArray(outcome, end));
+        }
+        [TestMethod]
+        public void BinarySolveHorizontalTestTwo()
+        {
+            int[,] start =
+            {
+                {0,0,0,0,0,0,1,1 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 }
+            };
+            int[,] end =
+            {
+                {0,0,0,0,0,2,1,1 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 }
+            };
+            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardProperty.BinaryEightByEight);
+
+            systemUnderTest.BinarySolve();
+            int[,] outcome = systemUnderTest.GetAsMultidimentionalArray();
+
+            Assert.IsTrue(EqualTwoDimentionalArray(outcome, end));
+        }
+        [TestMethod]
+        public void BinarySolveHorizontalTestThree()
+        {
+            int[,] start =
+            {
+                {1,0,1,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 }
+            };
+            int[,] end =
+            {
+                {1,2,1,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 }
+            };
+            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardProperty.BinaryEightByEight);
+
+            systemUnderTest.BinarySolve();
+            int[,] outcome = systemUnderTest.GetAsMultidimentionalArray();
+
+            Assert.IsTrue(EqualTwoDimentionalArray(outcome, end));
+        }
+        [TestMethod]
+        public void BinarySolveVerticalTestOne()
+        {
+            int[,] start =
+            {
+                {1,0,0,0,0,0,0,0 },
+                {1,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 }
+            };
+            int[,] end =
+            {
+                {1,0,0,0,0,0,0,0 },
+                {1,0,0,0,0,0,0,0 },
+                {2,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 }
+            };
+            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardProperty.BinaryEightByEight);
+
+            systemUnderTest.BinarySolve();
+            int[,] outcome = systemUnderTest.GetAsMultidimentionalArray();
+
+            Assert.IsTrue(EqualTwoDimentionalArray(outcome, end));
+        }
+        [TestMethod]
+        public void BinarySolveVerticalTestTwo()
+        {
+            int[,] start =
+            {
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {1,0,0,0,0,0,0,0 },
+                {1,0,0,0,0,0,0,0 }
+            };
+            int[,] end =
+            {
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {2,0,0,0,0,0,0,0 },
+                {1,0,0,0,0,0,0,0 },
+                {1,0,0,0,0,0,0,0 }
+            };
+            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardProperty.BinaryEightByEight);
+
+            systemUnderTest.BinarySolve();
+            int[,] outcome = systemUnderTest.GetAsMultidimentionalArray();
+
+            Assert.IsTrue(EqualTwoDimentionalArray(outcome, end));
+        }
+        [TestMethod]
+        public void BinarySolveVerticalTestThree()
+        {
+            int[,] start =
+            {
+                {1,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {1,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 }
+            };
+            int[,] end =
+            {
+                {1,0,0,0,0,0,0,0 },
+                {2,0,0,0,0,0,0,0 },
+                {1,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 },
+                {0,0,0,0,0,0,0,0 }
+            };
+            systemUnderTest = new SudokuBoard(start, SudokuBoard.BoardProperty.BinaryEightByEight);
+
+            systemUnderTest.BinarySolve();
+            int[,] outcome = systemUnderTest.GetAsMultidimentionalArray();
+
+            Assert.IsTrue(EqualTwoDimentionalArray(outcome, end));
         }
 
         [TestMethod]
@@ -216,7 +407,7 @@ namespace SudokuSolverStaticTest
                 {1,0 },
                 {2,0 }
             };
-            systemUnderTest = new SudokuBoard(Input, SudokuBoard.BoardPropperty.TwoByTwo);
+            systemUnderTest = new SudokuBoard(Input, SudokuBoard.BoardProperty.TwoByTwo);
 
             Assert.IsTrue(systemUnderTest.SimpleHorisontalTest());
         }
@@ -228,7 +419,7 @@ namespace SudokuSolverStaticTest
                 {1,0 },
                 {1,0 }
             };
-            systemUnderTest = new SudokuBoard(Input, SudokuBoard.BoardPropperty.TwoByTwo);
+            systemUnderTest = new SudokuBoard(Input, SudokuBoard.BoardProperty.TwoByTwo);
 
             Assert.IsFalse(systemUnderTest.SimpleHorisontalTest());
         }
@@ -240,7 +431,7 @@ namespace SudokuSolverStaticTest
                 {1,2 },
                 {0,0 }
             };
-            systemUnderTest = new SudokuBoard(Input, SudokuBoard.BoardPropperty.TwoByTwo);
+            systemUnderTest = new SudokuBoard(Input, SudokuBoard.BoardProperty.TwoByTwo);
 
             Assert.IsTrue(systemUnderTest.SimpleVerticalTest());
         }
@@ -252,7 +443,7 @@ namespace SudokuSolverStaticTest
                 {1,1 },
                 {0,0 }
             };
-            systemUnderTest = new SudokuBoard(Input, SudokuBoard.BoardPropperty.TwoByTwo);
+            systemUnderTest = new SudokuBoard(Input, SudokuBoard.BoardProperty.TwoByTwo);
 
             Assert.IsFalse(systemUnderTest.SimpleVerticalTest());
         }
@@ -264,7 +455,7 @@ namespace SudokuSolverStaticTest
                 {1,0 },
                 {2,0 }
             };
-            systemUnderTest = new SudokuBoard(Input, SudokuBoard.BoardPropperty.TwoByTwo);
+            systemUnderTest = new SudokuBoard(Input, SudokuBoard.BoardProperty.TwoByTwo);
 
             Assert.IsTrue(systemUnderTest.SimpleSquareTest());
         }
@@ -276,7 +467,7 @@ namespace SudokuSolverStaticTest
                 {1,0 },
                 {1,0 }
             };
-            systemUnderTest = new SudokuBoard(Input, SudokuBoard.BoardPropperty.TwoByTwo);
+            systemUnderTest = new SudokuBoard(Input, SudokuBoard.BoardProperty.TwoByTwo);
 
             Assert.IsFalse(systemUnderTest.SimpleSquareTest());
         }
