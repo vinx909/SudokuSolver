@@ -19,13 +19,22 @@ namespace SudokuSolverStatic
 
         private const string exceptionNoEmptySpotToGuessFor = "trying to fill an empty stop when no empty spot can be found";
         private const string exceptionNoGuessToGuessIn = "trying to make a different guess when there is no guess";
-        private static Dictionary<BoardProperty, BoardPropertySet> boardProperties = new Dictionary<BoardProperty, BoardPropertySet>
+        private static readonly Dictionary<BoardProperty, BoardPropertySet> boardProperties = new Dictionary<BoardProperty, BoardPropertySet>
         {
             { BoardProperty.NineByNine, new BoardPropertySet { BoardWidth = 9, BoardHeight = 9, SquareWidth = 3, SquareHeight = 3, MinNumber = 1, MaxNumber = 9 } },
             { BoardProperty.SixBySix, new BoardPropertySet { BoardWidth = 6, BoardHeight = 6, SquareWidth = 3, SquareHeight = 2, MinNumber = 1, MaxNumber = 6 } },
             { BoardProperty.FourByFour, new BoardPropertySet { BoardWidth = 4, BoardHeight = 4, SquareWidth = 2, SquareHeight = 2, MinNumber = 1, MaxNumber = 4 } },
             { BoardProperty.TwoByTwo, new BoardPropertySet { BoardWidth = 2, BoardHeight = 2, SquareWidth = 2, SquareHeight = 1, MinNumber = 1, MaxNumber = 2 } },
             { BoardProperty.BinaryEightByEight, new BoardPropertySet { BoardWidth = 8, BoardHeight = 8, SquareWidth = 0, SquareHeight = 0,  MinNumber = 1, MaxNumber = 2 } }
+        };
+        private static readonly BoardProperty[] boardPropertiesClassic = new BoardProperty[] {
+            BoardProperty.TwoByTwo,
+            BoardProperty.FourByFour,
+            BoardProperty.SixBySix,
+            BoardProperty.NineByNine};
+        private static readonly BoardProperty[] boardPropertiesBinary = new BoardProperty[]
+        {
+            BoardProperty.BinaryEightByEight
         };
 
         private readonly Func<int, int, SudokuField> defaultCreateSudokuField = (int width, int height) =>
@@ -104,7 +113,7 @@ namespace SudokuSolverStatic
 
         public void SimpleHorisontalExclusion()
         {
-            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
+            if (boardPropertiesClassic.Contains(boardProperty))
             {
                 List<SudokuField> fields = new List<SudokuField>();
                 for (int y = 0; y < boardProperties[boardProperty].BoardHeight; y++)
@@ -120,7 +129,7 @@ namespace SudokuSolverStatic
         }
         public void SimpleVerticalExclusion()
         {
-            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
+            if (boardPropertiesClassic.Contains(boardProperty))
             {
                 List<SudokuField> fields = new List<SudokuField>();
                 for (int x = 0; x < boardProperties[boardProperty].BoardHeight; x++)
@@ -136,7 +145,7 @@ namespace SudokuSolverStatic
         }
         public void SimpleSquareExclusion()
         {
-            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
+            if (boardPropertiesClassic.Contains(boardProperty))
             {
                 List<SudokuField> fields = new List<SudokuField>();
                 for (int xSquare = 0; xSquare < boardProperties[boardProperty].NumberOfHorizontalSquares; xSquare++)
@@ -161,7 +170,7 @@ namespace SudokuSolverStatic
 
         public void HorizontalExclusionOnOnlyPositionsThatFit()
         {
-            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
+            if (boardPropertiesClassic.Contains(boardProperty))
             {
                 List<SudokuField> fields = new List<SudokuField>();
                 for(int y = 0; y < board.GetLength(1); y++)
@@ -177,7 +186,7 @@ namespace SudokuSolverStatic
         }
         public void VerticalExclusionOnOnlyPositionsThatFit()
         {
-            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
+            if (boardPropertiesClassic.Contains(boardProperty))
             {
                 List<SudokuField> fields = new List<SudokuField>();
                 for (int x = 0; x < board.GetLength(0); x++)
@@ -193,7 +202,7 @@ namespace SudokuSolverStatic
         }
         public void SquareExclusionOnOnlyPositionsThatFit()
         {
-            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
+            if (boardPropertiesClassic.Contains(boardProperty))
             {
                 List<SudokuField> fields = new List<SudokuField>();
                 for(int xSquare = 0; xSquare < boardProperties[boardProperty].NumberOfHorizontalSquares; xSquare++)
@@ -323,15 +332,15 @@ namespace SudokuSolverStatic
 
         public void BinarySolve()
         {
-            if(boardProperty == BoardProperty.BinaryEightByEight)
+            if(boardPropertiesBinary.Contains(boardProperty))
             {
-                bool changeMade = true;
-                while (changeMade == true)
+                bool changeMade;
+                do
                 {
                     changeMade = false;
-                    for(int x = 0; x < boardProperties[boardProperty].BoardWidth; x++)
+                    for (int x = 0; x < boardProperties[boardProperty].BoardWidth; x++)
                     {
-                        for(int y = 0; y < boardProperties[boardProperty].BoardHeight; y++)
+                        for (int y = 0; y < boardProperties[boardProperty].BoardHeight; y++)
                         {
                             bool newchange = BinarySolve(x, y);
                             changeMade = changeMade || newchange;
@@ -339,6 +348,7 @@ namespace SudokuSolverStatic
                     }
                     Changed = Changed || changeMade;
                 }
+                while (changeMade == true);
             }
         }
         private bool BinarySolve(int x, int y)
@@ -403,6 +413,15 @@ namespace SudokuSolverStatic
             }
             return false;
         }
+        private bool BinarySolveTryToSetWithTwoNumbers(int x, int y, int? number1, int? number2, SudokuField.Certainty certainty)
+        {
+            if (number1 != null && number2 != null && number1 == number2)
+            {
+                board[x, y].SetNumber(BinaryOtherNumber((int)number1), certainty);
+                return true;
+            }
+            return false;
+        }
         private int BinaryOtherNumber(int number)
         {
             if (boardProperties[boardProperty].MaxNumber == number)
@@ -418,15 +437,6 @@ namespace SudokuSolverStatic
                 throw new Exception();
             }
         }
-        private bool BinarySolveTryToSetWithTwoNumbers(int x, int y, int? number1, int? number2, SudokuField.Certainty certainty)
-        {
-            if (number1 != null && number2 != null && number1 == number2)
-            {
-                board[x, y].SetNumber(BinaryOtherNumber((int)number1), certainty);
-                return true;
-            }
-            return false;
-        }
 
         public bool SimpleTest()
         {
@@ -434,7 +444,7 @@ namespace SudokuSolverStatic
         }
         public bool SimpleHorisontalTest()
         {
-            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
+            if (boardPropertiesClassic.Contains(boardProperty))
             {
                 List<int> numbers = new List<int>();
                 for (int y = 0; y < boardProperties[boardProperty].BoardHeight; y++)
@@ -459,7 +469,7 @@ namespace SudokuSolverStatic
         }
         public bool SimpleVerticalTest()
         {
-            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
+            if (boardPropertiesClassic.Contains(boardProperty))
             {
                 List<int> numbers = new List<int>();
                 for (int x = 0; x < boardProperties[boardProperty].BoardHeight; x++)
@@ -484,7 +494,7 @@ namespace SudokuSolverStatic
         }
         public bool SimpleSquareTest()
         {
-            if (boardProperty == BoardProperty.NineByNine || boardProperty == BoardProperty.SixBySix || boardProperty == BoardProperty.FourByFour || boardProperty == BoardProperty.TwoByTwo)
+            if (boardPropertiesClassic.Contains(boardProperty))
             {
                 List<int> numbers = new List<int>();
                 List<SudokuField> fields = new List<SudokuField>();
