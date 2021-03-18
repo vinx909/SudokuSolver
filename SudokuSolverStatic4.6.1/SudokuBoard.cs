@@ -13,7 +13,8 @@ namespace SudokuSolverStatic
             NineByNine,
             SixBySix,
             FourByFour,
-            TwoByTwo
+            TwoByTwo,
+            BinaryEightByEight
         }
 
         private const string exceptionNoEmptySpotToGuessFor = "trying to fill an empty stop when no empty spot can be found";
@@ -23,7 +24,8 @@ namespace SudokuSolverStatic
             { BoardProperty.NineByNine, new BoardPropertySet { BoardWidth = 9, BoardHeight = 9, SquareWidth = 3, SquareHeight = 3, MinNumber = 1, MaxNumber = 9 } },
             { BoardProperty.SixBySix, new BoardPropertySet { BoardWidth = 6, BoardHeight = 6, SquareWidth = 3, SquareHeight = 2, MinNumber = 1, MaxNumber = 6 } },
             { BoardProperty.FourByFour, new BoardPropertySet { BoardWidth = 4, BoardHeight = 4, SquareWidth = 2, SquareHeight = 2, MinNumber = 1, MaxNumber = 4 } },
-            { BoardProperty.TwoByTwo, new BoardPropertySet { BoardWidth = 2, BoardHeight = 2, SquareWidth = 2, SquareHeight = 1, MinNumber = 1, MaxNumber = 2 } }
+            { BoardProperty.TwoByTwo, new BoardPropertySet { BoardWidth = 2, BoardHeight = 2, SquareWidth = 2, SquareHeight = 1, MinNumber = 1, MaxNumber = 2 } },
+            { BoardProperty.BinaryEightByEight, new BoardPropertySet { BoardWidth = 8, BoardHeight = 8, SquareWidth = 0, SquareHeight = 0,  MinNumber = 1, MaxNumber = 2 } }
         };
 
         private readonly Func<int, int, SudokuField> defaultCreateSudokuField = (int width, int height) =>
@@ -317,6 +319,113 @@ namespace SudokuSolverStatic
                     board[guess.X, guess.Y].SetNumber(guess.Guess, SudokuField.Certainty.Guess);
                 }
             }
+        }
+
+        public void BinarySolve()
+        {
+            if(boardProperty == BoardProperty.BinaryEightByEight)
+            {
+                bool changeMade = true;
+                while (changeMade == true)
+                {
+                    changeMade = false;
+                    for(int x = 0; x < boardProperties[boardProperty].BoardWidth; x++)
+                    {
+                        for(int y = 0; y < boardProperties[boardProperty].BoardHeight; y++)
+                        {
+                            bool newchange = BinarySolve(x, y);
+                            changeMade = changeMade || newchange;
+                        }
+                    }
+                    Changed = Changed || changeMade;
+                }
+            }
+        }
+        private bool BinarySolve(int x, int y)
+        {
+            if(board[x,y].GetNumber() != null)
+            {
+                return false;
+            }
+
+            SudokuField.Certainty toSetTo = SudokuField.Certainty.FiguredOut;
+            if (Guess == true)
+            {
+                toSetTo = SudokuField.Certainty.FiguredOutOnGuess;
+            }
+
+            int? number1;
+            int? number2;
+
+            if (x - 1 >= 0 && x + 1 < boardProperties[boardProperty].BoardWidth)
+            {
+                number1 = board[x - 1, y].GetNumber();
+                number2 = board[x + 1, y].GetNumber();
+                bool attempt = BinarySolveTryToSetWithTwoNumbers(x, y, number1, number2, toSetTo);
+                if (attempt == true)
+                {
+                    return true;
+                }
+            }
+            if (y - 1 >= 0 && y + 1 < boardProperties[boardProperty].BoardHeight)
+            {
+                number1 = board[x, y - 1].GetNumber();
+                number2 = board[x, y + 1].GetNumber();
+                bool attempt = BinarySolveTryToSetWithTwoNumbers(x, y, number1, number2, toSetTo);
+                if(attempt == true)
+                {
+                    return true;
+                }
+            }
+            int[] positiveAndNegative = new int[]{ -1, 1 };
+            foreach(int positiveNegative in positiveAndNegative)
+            {
+                if(x + 2 * positiveNegative >= 0 && x + 2 * positiveNegative < boardProperties[boardProperty].BoardWidth)
+                {
+                    number1 = board[x + 2 * positiveNegative, y].GetNumber();
+                    number2 = board[x + positiveNegative, y].GetNumber();
+                    bool attempt = BinarySolveTryToSetWithTwoNumbers(x, y, number1, number2, toSetTo);
+                    if (attempt == true)
+                    {
+                        return true;
+                    }
+                }
+                if (y + 2 * positiveNegative >= 0 && y + 2 * positiveNegative < boardProperties[boardProperty].BoardHeight)
+                {
+                    number1 = board[x, y + 2 * positiveNegative].GetNumber();
+                    number2 = board[x, y + positiveNegative].GetNumber();
+                    bool attempt = BinarySolveTryToSetWithTwoNumbers(x, y, number1, number2, toSetTo);
+                    if (attempt == true)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        private int BinaryOtherNumber(int number)
+        {
+            if (boardProperties[boardProperty].MaxNumber == number)
+            {
+                return boardProperties[boardProperty].MinNumber;
+            }
+            else if(boardProperties[boardProperty].MinNumber == number)
+            {
+                return boardProperties[boardProperty].MaxNumber;
+            }
+            else
+            {
+                throw new Exception();
+            }
+        }
+        private bool BinarySolveTryToSetWithTwoNumbers(int x, int y, int? number1, int? number2, SudokuField.Certainty certainty)
+        {
+            if (number1 != null && number2 != null && number1 == number2)
+            {
+                board[x, y].SetNumber(BinaryOtherNumber((int)number1), certainty);
+                return true;
+            }
+            return false;
         }
 
         public bool SimpleTest()
